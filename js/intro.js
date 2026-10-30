@@ -33,15 +33,17 @@
   function loadImg(src) { const i = new Image(); i.src = src; return i; }
   // 树顶的大星星：金色 + 右下橙色阴影，外面自动加一圈深色描边（浅色墙上也醒目）
   const STAR = [
-    '....y....',
-    '...yyy...',
-    '...ywy...',
-    'yyyywyyyy',
-    '.yywwwyo.',
-    '..yywyo..',
-    '..yo.oo..',
-    '.yo...oo.',
-    '.o.....o.',
+    '.....y.....',
+    '....yyy....',
+    '....ywy....',
+    'yyyyywyyyoo',
+    '.yyywwwyyo.',
+    '..yyywyyo..',
+    '..yyyyyoo..',
+    '.yyyyyyooo.',
+    '.yyyy.yooo.',
+    '.yyy...ooo.',
+    '.yy.....oo.',
   ];
   function outlined(rows, ch) {
     const h = rows.length + 2, w = rows[0].length + 2;
@@ -654,14 +656,14 @@
       }
 
       // 星星：她抛上去之后放光
-      const starX = IN_TREE_X - 4, starY = ty - 7;
+      const starX = IN_TREE_X - 5, starY = ty - 9;
       if (t >= T.star) {
         const pulse = Math.floor(G.t * 3) % 2;
         const L = pulse ? 4 : 3;
         G.rect(IN_TREE_X - 0.5, starY - L - 1, 1, L, '#f5a623');
         G.rect(starX - L - 1, starY + 3, L, 1, '#f5a623');
-        G.rect(starX + 10, starY + 3, L, 1, '#f5a623');
-        if (pulse) for (const [dx, dy] of [[-2, -2], [10, -2], [-2, 9], [10, 9]]) G.rect(starX + dx, starY + dy, 1, 1, '#ffd23f');
+        G.rect(starX + 12, starY + 3, L, 1, '#f5a623');
+        if (pulse) for (const [dx, dy] of [[-2, -2], [12, -2], [-2, 11], [12, 11]]) G.rect(starX + dx, starY + dy, 1, 1, '#ffd23f');
         G.draw(P.star, starX - 1, starY - 1);
 
         // 树周围随机一闪一闪的小星光
