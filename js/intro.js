@@ -35,8 +35,8 @@
   function sprites() {
     if (SPR) return SPR;
     SPR = {
-      girl: loadImg('assets/girl.png'),   // 去砍树的她
-      boy: loadImg('assets/boy.png'),     // 在家等的他
+      girl: loadImg('assets/girl.png?v=2'),   // 去砍树的她（换图后把 v 加 1）
+      boy: loadImg('assets/boy.png?v=2'),     // 在家等的他
       star: G.makeSprite(STAR, { y: '#ffd23f', w: '#ffffff' }),
       tree: pine(18, 30, false),
       bigTree: pine(28, 46, false),   // 进屋后的近景大树
