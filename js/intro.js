@@ -703,7 +703,7 @@
     const BR = 42;
     const burstCv = G.makeCanvas(BR * 2, BR), burstCtx = burstCv.getContext('2d');
     const burstImg = burstCtx.createImageData(BR * 2, BR);
-    const BURST_COL = [[255, 246, 208], [255, 226, 138], [240, 176, 74]];
+    const BURST_COL = [[255, 226, 138], [240, 176, 74]];
     function drawBurst(cx, y, k) {
       const R = BR * k, d = burstImg.data, rot = G.t * 0.5, slot = Math.PI / 13;
       d.fill(0);
@@ -713,8 +713,8 @@
           if (r > R) continue;
           const ang = Math.atan2(dx, dy), band = (((ang + rot) / slot) % 2 + 2) % 2;
           // 只保留朝上 ±65° 的光芒，光带占 40%，看起来更细更利落
-          if (r >= 7 && (band >= 0.8 || Math.abs(ang) > 1.13)) continue;
-          const c = BURST_COL[r < 7 ? 0 : r < R * 0.5 ? 1 : 2], o = (j * BR * 2 + i) * 4;
+          if (band >= 0.8 || Math.abs(ang) > 1.13) continue;
+          const c = BURST_COL[r < R * 0.5 ? 0 : 1], o = (j * BR * 2 + i) * 4;
           d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
         }
       }
