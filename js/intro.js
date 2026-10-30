@@ -1,5 +1,5 @@
-/* 开场：拆礼物 → 小人去森林砍树 → 拖回家 → 装饰成圣诞树 → MERRY CHRISTMAS
-   画面先画在一半分辨率的离屏画布上（90px 宽）再放大 2 倍，像素更大颗；文字直接画在原分辨率上 */
+/* 开场：拆礼物 → 她去森林砍树（他在窗边等）→ 拖回家 → 两人一起装饰圣诞树 → MERRY CHRISTMAS
+   场景画在一半分辨率的离屏画布上（90px 宽）再放大 2 倍；两个角色和文字画在原分辨率上 */
 (function () {
   const TO = '你';   // 礼物盒上的称呼：「给 TO 的圣诞礼物」，可以改成他的名字或昵称
 
@@ -14,47 +14,29 @@
     [3, 5.4, '去森林挑一棵最美的树!'],
     [5.5, 8.4, '就选这一棵!'],
     [9, 13.4, '嘿咻嘿咻~ 拖回家!'],
-    [14.8, 18.8, '开始装饰圣诞树~'],
+    [14.8, 18.8, '一起装饰圣诞树~'],
   ];
 
   // ---------- 场景布局（世界坐标，半分辨率像素） ----------
-  const HOUSE_X = 4, DOOR_X = 34, CHOP_X = 160, TREE_X = 166, DRAG_END = 40, WORLD = 224;
+  const HOUSE_X = 0, DOOR_X = 44, CHOP_X = 155, TREE_X = 166, WORLD = 224;
   // 森林里的树 [x, 宽, 高]；150~200 留一片空地给要砍的那棵
   const FOREST = [[96, 14, 24], [108, 18, 30], [122, 12, 20], [136, 16, 28], [206, 18, 32], [218, 12, 22]];
-  const IN_TREE_X = 24, IN_HERO_X = 50, ORN_GAP = 0.22;
+  const IN_TREE_X = 24, IN_GIRL_X = 45, IN_BOY_X = 59, ORN_GAP = 0.22;
   const NIGHT = ['#0b0b1a', '#121436', '#1a1f4f', '#243066', '#2f4280'];
   const HANDLE = '#8a5a3c', METAL = '#9aa5b8';
   const ORN_COLORS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#ffffff', '#b388ff'];
 
   // ---------- 精灵 ----------
-  const PAL = { k: '#1b1433', h: '#e23b4b', w: '#ffffff', s: '#ffd3b0', q: '#ff8fa3', r: '#ffd23f', c: '#2f9e5e', p: '#3b2a4a', b: '#5a3d2b' };
-  const HERO = [
-    '...kkkk.ww',
-    '..khhhhkww',
-    '.khhhhhhk.',
-    'kwwwwwwwwk',
-    'kssssssssk',
-    'kssskssksk',
-    'ksqssssqsk',
-    '.kssssssk.',
-    'krrrrrrrrk',
-    'kcccrrccck',
-    'kcccccccck',
-    'ksccccccsk',
-    '.kcccccck.',
-    '.kppkkppk.',
-    '.kpk..kpk.',
-    '.kbbk.kbbk',
-  ];
-  const HERO_WALK = HERO.slice(0, 13).concat(['..kppppk..', '..kpkkpk..', '..kbbkbbk.']);
+  // 两个角色是 32x41 的像素图（脚底在第 40 行），在原分辨率上 1:1 绘制
+  function loadImg(src) { const i = new Image(); i.src = src; return i; }
   const STAR = ['..y..', '.yyy.', 'yywyy', '.yyy.', '.y.y.'];
 
   let SPR = null;
   function sprites() {
     if (SPR) return SPR;
     SPR = {
-      hero: G.makeSprite(HERO, PAL),
-      heroWalk: G.makeSprite(HERO_WALK, PAL),
+      girl: loadImg('assets/girl.png'),   // 去砍树的她
+      boy: loadImg('assets/boy.png'),     // 在家等的他
       star: G.makeSprite(STAR, { y: '#ffd23f', w: '#ffffff' }),
       tree: pine(18, 30, false),
       bigTree: pine(28, 46, false),   // 进屋后的近景大树
@@ -140,11 +122,11 @@
     return pts;
   }
 
-  // 2x2 抖动的像素风淡入淡出
+  // 2x2 抖动的像素风淡入淡出（在原分辨率上画，所以每格 2px）
   const FADE = [1, 2, 3].map(l => {
-    const c = G.makeCanvas(2, 2), x = c.getContext('2d'), B = [[0, 2], [3, 1]];
+    const c = G.makeCanvas(4, 4), x = c.getContext('2d'), B = [[0, 2], [3, 1]];
     x.fillStyle = '#000';
-    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) if (B[j][i] < l) x.fillRect(i, j, 1, 1);
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) if (B[j][i] < l) x.fillRect(i * 2, j * 2, 2, 2);
     return c;
   });
   function fade(k, w, h) {
@@ -170,7 +152,7 @@
 
   G.Intro = function () {
     const A = G.audio, P = sprites();
-    const S = { phase: 'gift', gt: 0, open: 0, t: 0, ei: 0, parts: [], floats: [], hop: null, skipTap: null, leaving: 0, gone: false };
+    const S = { phase: 'gift', gt: 0, open: 0, t: 0, ei: 0, parts: [], floats: [], hops: {}, heartT: 0, skipTap: null, leaving: 0, gone: false };
     const flakes = Array.from({ length: 50 }, () => ({ x: G.rand(0, 90), y: G.rand(0, 200), v: G.rand(6, 14), ph: G.rand(0, 6) }));
     const stars = Array.from({ length: 28 }, () => ({ x: Math.floor(G.rand(0, 90)), y: Math.random(), p: G.rand(0, 6.28) }));
     let wb = null, sky = null, skyKey = '';
@@ -178,9 +160,10 @@
     const dims = () => { const H2 = Math.ceil(G.H / 2); return { W2: G.W / 2, H2, gy: Math.round(H2 * 0.74) }; };
     const part = o => S.parts.push(Object.assign({ vx: 0, vy: 0, g: 0, s: 1 }, o));
     const float = (text, x, y) => S.floats.push({ text, x, y, life: 0.9 });
-    const hop = (dur, h) => { S.hop = { t0: S.t, dur, h }; };
-    const hopY = () => {
-      const h = S.hop;
+    // 跳一下：who = 'girl' | 'boy'，h 为原分辨率像素
+    const hop = (who, dur, h) => { S.hops[who] = { t0: S.t, dur, h }; };
+    const hopY = who => {
+      const h = S.hops[who];
       if (!h || S.t - h.t0 > h.dur) return 0;
       return -Math.round(Math.sin((S.t - h.t0) / h.dur * Math.PI) * h.h);
     };
@@ -208,14 +191,15 @@
       }
       float('TIMBER!', TREE_X + 18, gy - 20);
     });
-    at(T.turn, () => { A.play('jump'); hop(0.35, 6); });
-    P.spots.forEach((_, i) => at(T.deco + i * ORN_GAP, () => { A.play('ding', i); hop(0.2, 3); }));
+    at(T.land + 0.1, () => { A.play('jump'); hop('girl', 0.35, 12); });
+    P.spots.forEach((_, i) => at(T.deco + i * ORN_GAP, () => { A.play('ding', i); hop(i % 2 ? 'boy' : 'girl', 0.2, 6); }));
     at(T.lights, () => A.play('sparkle'));
-    at(T.throwStar, () => { A.play('jump'); hop(0.4, 8); });
+    at(T.throwStar, () => { A.play('jump'); hop('girl', 0.4, 16); });
     at(T.star, () => {
       const { gy } = dims();
       A.play('sparkle');
       A.play('ding', 11);
+      hop('boy', 0.35, 10);
       G.flash = 0.4;
       for (let i = 0; i < 16; i++) {
         const a = i / 16 * Math.PI * 2;
@@ -224,31 +208,37 @@
     });
     events.sort((a, b) => a.t - b.t);
 
-    // ---------- 小人在每个时刻的状态 ----------
-    function hero(t) {
-      if (t < T.walk) return { x: DOOR_X, flip: false, walk: false, axe: 'shoulder' };
+    // ---------- 她在每个时刻的状态（世界坐标） ----------
+    const GRAB_X = TREE_X - 4;            // 拖树时手的位置正好在树根
+    const DRAG_DONE = T.fadeOut - 0.4;
+    function girl(t) {
+      if (t < T.walk) return { x: DOOR_X, axe: 'shoulder', hidden: t < 0.4 };
       if (t < T.chop) {
         const k = (t - T.walk) / (T.chop - T.walk);
-        return { x: DOOR_X + (CHOP_X - DOOR_X) * k, flip: false, walk: true, axe: 'shoulder' };
+        return { x: DOOR_X + (CHOP_X - DOOR_X) * k, walk: true, axe: 'shoulder' };
       }
       if (t < T.fall) {
         const p = ((t - T.chop) % 0.8) / 0.8;
-        return { x: CHOP_X, flip: false, walk: false, axe: p < 0.6 ? 'up' : 'down' };
+        return { x: CHOP_X, axe: p < 0.6 ? 'up' : 'down' };
       }
-      if (t < T.turn) return { x: CHOP_X, flip: false, walk: false, axe: 'shoulder' };
-      if (t < T.drag) return { x: CHOP_X, flip: true, walk: false, axe: 'shoulder' };
-      const k = Math.min(1, (t - T.drag) / (T.fadeOut - T.drag));
-      return { x: CHOP_X + (DRAG_END - CHOP_X) * k, flip: true, walk: k < 1, axe: 'shoulder' };
+      if (t < T.turn) return { x: CHOP_X, axe: 'shoulder' };
+      if (t < T.drag) {
+        const k = (t - T.turn) / (T.drag - T.turn);
+        return { x: CHOP_X + (GRAB_X - CHOP_X) * k, walk: true, axe: 'shoulder' };
+      }
+      const k = Math.min(1, (t - T.drag) / (DRAG_DONE - T.drag));
+      return { x: GRAB_X + (DOOR_X - GRAB_X) * k, flip: true, walk: k < 1, axe: 'shoulder', hidden: t > T.fadeOut - 0.3 };
     }
 
-    function drawHero(x, gy, o) {
-      const X = Math.round(x), top = gy - 16 + hopY(), f = o.flip ? -1 : 1;
-      const r = (ox, oy, w, h, c) => G.rect(f > 0 ? X + ox : X - ox - w, top + oy, w, h, c);
-      if (o.axe === 'shoulder') { r(-4, -2, 1, 11, HANDLE); r(-7, -3, 4, 3, METAL); r(-7, -3, 1, 3, '#ffffff'); }
-      if (o.axe === 'up') { r(-3, -6, 1, 12, HANDLE); r(-2, -7, 4, 3, METAL); r(1, -7, 1, 3, '#ffffff'); }
-      const spr = o.walk && Math.floor(S.t * 6) % 2 ? P.heroWalk : P.hero;
-      G.draw(spr, X - 5, top, 1, o.flip);
-      if (o.axe === 'down') { r(3, 10, 3, 1, HANDLE); r(5, 8, 3, 5, METAL); r(5, 12, 3, 1, '#ffffff'); }
+    // 在原分辨率上画角色：sx 为屏幕中心 x，ground 为屏幕上的地面 y
+    function drawAvatar(img, sx, ground, o = {}) {
+      const X = Math.round(sx), f = o.flip ? -1 : 1;
+      const r = (ox, oy, w, h, c) => G.rect(f > 0 ? X + ox : X - ox - w, ground + oy, w, h, c);
+      if (o.axe === 'shoulder') { r(-11, -32, 2, 22, HANDLE); r(-17, -35, 8, 6, METAL); r(-17, -35, 2, 6, '#ffffff'); }
+      const bob = o.walk ? -(Math.floor(S.t * 6) % 2) * 2 : 0;
+      if (img.complete && img.naturalWidth) G.draw(img, X - 16, ground - 40 + bob + (o.dy || 0), 1, o.flip);
+      if (o.axe === 'up') { r(8, -36, 2, 26, HANDLE); r(8, -40, 9, 6, METAL); r(15, -40, 2, 6, '#ffffff'); }
+      if (o.axe === 'down') { r(8, -11, 12, 2, HANDLE); r(18, -15, 6, 9, METAL); r(22, -15, 2, 9, '#ffffff'); }
     }
 
     // ---------- 室外 ----------
@@ -278,45 +268,62 @@
       }
     }
 
+    // 窗户玻璃区域（世界坐标，相对房子），他会出现在这里
+    const WIN = { x: 7, y: -25, w: 18, h: 14 };
     function drawHouse(cam, gy, doorOpen) {
       const x = HOUSE_X - cam;
-      G.rect(x + 30, gy - 38, 6, 12, '#6b5f8a');
-      G.rect(x + 29, gy - 39, 8, 2, '#ffffff');
+      G.rect(x + 40, gy - 50, 6, 14, '#6b5f8a');
+      G.rect(x + 39, gy - 51, 8, 2, '#ffffff');
       for (let k = 0; k < 4; k++) {
         const p = (G.t * 0.4 + k / 4) % 1;
         if (p > 0.85 && Math.floor(G.t * 20) % 2) continue;
-        G.rect(x + 32 + Math.round(Math.sin(p * 6 + k) * 3), gy - 41 - Math.round(p * 20), p > 0.5 ? 3 : 2, 2, '#9aa5b8');
+        G.rect(x + 42 + Math.round(Math.sin(p * 6 + k) * 3), gy - 53 - Math.round(p * 20), p > 0.5 ? 3 : 2, 2, '#9aa5b8');
       }
-      G.rect(x + 2, gy - 22, 40, 22, '#8a5a3c');
-      for (let y = gy - 18; y < gy; y += 4) G.rect(x + 2, y, 40, 1, '#6f4630');
-      for (let i = 0; i < 14; i++) {
-        const w = 48 - i * 3, rx = x - 2 + i * 1.5, ry = gy - 23 - i;
-        G.rect(rx, ry, w, 1, i >= 10 ? '#ffffff' : '#7a2e3a');
+      G.rect(x + 2, gy - 30, 56, 30, '#8a5a3c');
+      for (let y = gy - 26; y < gy; y += 4) G.rect(x + 2, y, 56, 1, '#6f4630');
+      for (let i = 0; i < 20; i++) {
+        const w = 64 - i * 3, rx = x - 2 + i * 1.5, ry = gy - 31 - i;
+        G.rect(rx, ry, w, 1, i >= 16 ? '#ffffff' : '#7a2e3a');
         G.rect(rx, ry, 2, 1, '#ffffff');
         G.rect(rx + w - 2, ry, 2, 1, '#ffffff');
       }
-      G.rect(x + 5, gy - 18, 12, 10, '#5a3d2b');
-      G.rect(x + 6, gy - 17, 10, 8, '#ffd23f');
-      G.rect(x + 10, gy - 17, 2, 8, '#5a3d2b');
-      G.rect(x + 6, gy - 14, 10, 1, '#5a3d2b');
-      G.rect(x + 4, gy - 8, 14, 1, '#ffffff');
-      G.rect(x + 25, gy - 17, 11, 17, '#3b2a1e');
+      G.rect(x + WIN.x - 1, gy + WIN.y - 1, WIN.w + 2, WIN.h + 2, '#5a3d2b');
+      G.rect(x + WIN.x, gy + WIN.y, WIN.w, WIN.h, '#ffd23f');
+      G.rect(x + WIN.x - 2, gy + WIN.y + WIN.h + 1, WIN.w + 4, 1, '#ffffff');
+      G.rect(x + 36, gy - 25, 15, 25, '#3b2a1e');
       if (doorOpen) {
-        G.rect(x + 26, gy - 16, 9, 16, '#ffb347');
+        G.rect(x + 37, gy - 24, 13, 24, '#ffb347');
       } else {
-        G.rect(x + 26, gy - 16, 9, 16, '#5a3d2b');
-        G.rect(x + 33, gy - 8, 1, 1, '#ffd23f');
-        G.circle(x + 30.5, gy - 11, 3, '#2f9e5e');
-        G.rect(x + 30, gy - 12, 1, 1, '#5a3d2b');
-        G.rect(x + 29, gy - 9, 3, 1, '#e23b4b');
+        G.rect(x + 37, gy - 24, 13, 24, '#5a3d2b');
+        G.rect(x + 39, gy - 22, 9, 8, '#4a3122');
+        G.rect(x + 39, gy - 11, 9, 8, '#4a3122');
+        G.rect(x + 47, gy - 12, 1, 2, '#ffd23f');
+        G.circle(x + 43.5, gy - 18, 4, '#2f9e5e');
+        G.rect(x + 42, gy - 19, 3, 2, '#5a3d2b');
+        G.rect(x + 42, gy - 15, 3, 1, '#e23b4b');
       }
     }
 
+    // 窗户里的他（原分辨率），窗格画在他前面
+    function drawBoyInWindow(cam, gy) {
+      const x0 = (HOUSE_X + WIN.x - cam) * 2, y0 = (gy + WIN.y) * 2, w = WIN.w * 2, h = WIN.h * 2;
+      if (x0 + w < 0) return;
+      const c = G.ctx;
+      c.save();
+      c.beginPath();
+      c.rect(x0, y0, w, h);
+      c.clip();
+      G.draw(P.boy, x0 + w / 2 - 16, y0 + 1 + (Math.floor(G.t * 1.5) % 2), 1);
+      c.restore();
+      G.rect(x0 + w / 2 - 2, y0, 4, h, '#5a3d2b');
+      G.rect(x0, y0 + 10, w, 2, '#5a3d2b');
+    }
+
     function drawOutside(t, d) {
-      const { gy } = d, h = hero(t);
-      const cam = Math.round(G.clamp(h.x - 40, 0, WORLD - d.W2));
+      const { gy } = d, h = girl(t);
+      const cam = Math.round(G.clamp(h.x - 45, 0, WORLD - d.W2));
       drawOutdoorBg(cam, d);
-      drawHouse(cam, gy, t < T.walk || t > T.fadeOut - 0.3);
+      drawHouse(cam, gy, t < T.walk || t > T.fadeOut - 0.6);
       for (const [fx, w, hh] of FOREST) G.draw(P.forest[w + 'x' + hh], fx - w / 2 - cam, gy - hh);
 
       // 要砍的那棵树
@@ -328,13 +335,12 @@
         G.rect(TREE_X - 1 - cam, gy - 2, 2, 2, '#5a3d2b');
         G.rect(TREE_X - 1 - cam, gy - 2, 2, 1, '#c8a070');
         const deg = t < T.land ? 90 * Math.pow((t - T.fall) / (T.land - T.fall), 2) : 90;
-        const px = t >= T.drag ? Math.round(h.x) + 6 : TREE_X;
+        const px = t >= T.drag ? Math.round(h.x) + 4 : TREE_X;
         if (t >= T.drag) G.rect(px - cam, gy + 1, TREE_X - px, 1, '#b8c8e8');
         const fr = rotTree(deg), py = gy - Math.round(9 * Math.sin(deg * Math.PI / 180));
         G.ctx.drawImage(fr.c, Math.round(px - fr.R - cam), Math.round(py - fr.R));
       }
-      if (!(t > T.fadeOut - 0.3 && t < T.inside)) drawHero(h.x - cam, gy, h);
-      return cam;
+      return { cam, h };
     }
 
     // ---------- 室内 ----------
@@ -363,20 +369,21 @@
       G.rect(wx + 1, wy + 8, 18, 1, '#5a3d2b');
       G.rect(wx + 1, wy + 15, 18, 2, '#ffffff');
 
-      G.rect(68, gy - 42, 12, 10, '#ffd23f');
-      G.rect(69, gy - 41, 10, 8, '#fff6d0');
-      G.draw(G.SPR.heartS, 71, gy - 40);
-      G.rect(62, gy - 20, 24, 20, '#7a6e98');
-      for (let y = gy - 16; y < gy; y += 4) G.rect(62, y, 24, 1, '#6b5f8a');
-      G.rect(67, gy - 12, 14, 12, '#1b1433');
+      const fx = 66;   // 壁炉左边
+      G.rect(fx + 6, gy - 42, 12, 10, '#ffd23f');
+      G.rect(fx + 7, gy - 41, 10, 8, '#fff6d0');
+      G.draw(G.SPR.heartS, fx + 9, gy - 40);
+      G.rect(fx, gy - 20, 24, 20, '#7a6e98');
+      for (let y = gy - 16; y < gy; y += 4) G.rect(fx, y, 24, 1, '#6b5f8a');
+      G.rect(fx + 5, gy - 12, 14, 12, '#1b1433');
       const fl = Math.floor(G.t * 10);
       for (let i = 0; i < 5; i++) {
         const h = 3 + ((fl + i * 3) % 4);
-        G.rect(68 + Math.round(i * 2.4), gy - h - 1, 2, h, i % 2 ? '#ff9f1c' : '#ffd23f');
+        G.rect(fx + 6 + Math.round(i * 2.4), gy - h - 1, 2, h, i % 2 ? '#ff9f1c' : '#ffd23f');
       }
-      G.rect(68, gy - 2, 12, 2, '#5a3d2b');
-      G.rect(60, gy - 22, 28, 3, '#5a3d2b');
-      for (const sx of [65, 76]) {
+      G.rect(fx + 6, gy - 2, 12, 2, '#5a3d2b');
+      G.rect(fx - 2, gy - 22, 28, 3, '#5a3d2b');
+      for (const sx of [fx + 3, fx + 14]) {
         G.rect(sx, gy - 20, 6, 2, '#ffffff');
         G.rect(sx + 1, gy - 18, 4, 6, '#e23b4b');
         G.rect(sx + 1, gy - 13, 6, 2, '#e23b4b');
@@ -416,10 +423,9 @@
         }
       } else if (t >= T.throwStar) {
         const p = (t - T.throwStar) / (T.star - T.throwStar);
-        const sx = IN_HERO_X - 3 + (IN_TREE_X - IN_HERO_X + 3) * p, sy = gy - 14 + (-33) * p - Math.sin(p * Math.PI) * 14;
+        const sx = IN_GIRL_X - 4 + (IN_TREE_X - IN_GIRL_X + 4) * p, sy = gy - 14 + (-33) * p - Math.sin(p * Math.PI) * 14;
         G.draw(P.star, sx - 2, sy - 2);
       }
-      drawHero(IN_HERO_X, gy, { flip: true, walk: false, axe: null });
     }
 
     // ---------- 礼物盒 ----------
@@ -479,6 +485,12 @@
         }
         S.t += dt;
         while (S.ei < events.length && events[S.ei].t <= S.t) events[S.ei++].fn();
+        // 结尾：两人中间不停冒出小爱心
+        if (S.t > T.title && (S.heartT -= dt) <= 0) {
+          S.heartT = 0.7;
+          const { gy } = dims();
+          part({ spr: G.SPR.heartS, x: (IN_GIRL_X + IN_BOY_X) / 2 + G.rand(-3, 3), y: gy - 24, vx: G.rand(-4, 4), vy: -10, life: 1.8 });
+        }
         if (S.leaving && (S.leaving += dt) > 0.4 && !S.gone) {
           S.gone = true;
           G.transition(() => G.Stage());
@@ -492,33 +504,47 @@
         G.ctx = wb.getContext('2d');
         G.ctx.imageSmoothingEnabled = false;
 
-        let cam = 0;
+        let cam = 0, h = null;
         const outside = S.phase === 'gift' || t < T.inside;
         if (S.phase === 'gift') {
           drawOutdoorBg(0, d);
           drawGift(d);
         } else if (outside) {
-          cam = drawOutside(t, d);
+          ({ cam, h } = drawOutside(t, d));
         } else {
           drawInside(t, d);
         }
         for (const p of S.parts) {
           if (p.life < 0.2 && Math.floor(G.t * 20) % 2) continue;
-          G.rect(p.x - cam, p.y, p.s, p.s, p.c);
+          if (p.spr) G.draw(p.spr, p.x - cam - 2, p.y - 2);
+          else G.rect(p.x - cam, p.y, p.s, p.s, p.c);
         }
         if (outside) {
           for (const f of flakes) G.rect(((f.x - cam * 0.3) % d.W2 + d.W2) % d.W2, f.y, 1, 1, '#ffffff');
         }
-        if (S.phase === 'gift') fade((S.open - 0.8) / 0.4, d.W2, d.H2);
-        else if (t < 0.6) fade(1 - t / 0.6, d.W2, d.H2);
-        else if (t >= T.fadeOut && t < T.inside) fade((t - T.fadeOut) / (T.inside - T.fadeOut), d.W2, d.H2);
-        else if (t >= T.inside && t < T.inside + 0.6) fade(1 - (t - T.inside) / 0.6, d.W2, d.H2);
 
         G.ctx = main;
         ctx.drawImage(wb, 0, 0, d.W2 * 2, d.H2 * 2);
 
-        // ---- 原分辨率的文字层 ----
+        // ---- 原分辨率：角色 ----
         const W = G.W, gy2 = d.gy * 2;
+        if (S.phase === 'story') {
+          if (outside) {
+            drawBoyInWindow(cam, d.gy);
+            if (!h.hidden) drawAvatar(P.girl, (h.x - cam) * 2, gy2, Object.assign({ dy: hopY('girl') }, h));
+          } else {
+            drawAvatar(P.boy, IN_BOY_X * 2, gy2, { dy: hopY('boy') });
+            drawAvatar(P.girl, IN_GIRL_X * 2, gy2, { dy: hopY('girl') });
+          }
+        }
+
+        // 淡入淡出盖在角色上面
+        if (S.phase === 'gift') fade((S.open - 0.8) / 0.4, W, G.H);
+        else if (t < 0.6) fade(1 - t / 0.6, W, G.H);
+        else if (t >= T.fadeOut && t < T.inside) fade((t - T.fadeOut) / (T.inside - T.fadeOut), W, G.H);
+        else if (t >= T.inside && t < T.inside + 0.6) fade(1 - (t - T.inside) / 0.6, W, G.H);
+
+        // ---- 原分辨率：文字 ----
         for (const f of S.floats) G.text(f.text, (f.x - cam) * 2, f.y * 2, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
 
         if (S.phase === 'gift') {
@@ -554,7 +580,7 @@
           S.ei = events.length;
           S.parts = [];
           S.floats = [];
-          S.hop = null;
+          S.hops = {};
           G.flash = 0.6;
           S.skipTap = id;
         } else {
