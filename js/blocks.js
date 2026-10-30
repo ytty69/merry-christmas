@@ -129,13 +129,25 @@
     // ---------- 布局 ----------
     function layout() {
       const W = G.W, H = G.H, top = 18, infoH = 24, ctrlH = 38;
-      const cell = G.clamp(Math.floor((H - top - infoH - ctrlH - 16) / ROWS), 6, Math.floor((W - 12) / COLS));
+      // 横屏：上下没有按键和信息栏，棋盘可以占满高度
+      const wide = W >= 260;
+      const cell = wide
+        ? G.clamp(Math.floor((H - top - 12) / ROWS), 6, 16)
+        : G.clamp(Math.floor((H - top - infoH - ctrlH - 16) / ROWS), 6, Math.floor((W - 12) / COLS));
       const bw = cell * COLS, bh = cell * ROWS;
-      return { W, H, cell, top, bx: Math.round((W - bw) / 2), by: top + infoH + 2, bw, bh, ctrlY: H - ctrlH - 4 };
+      return { W, H, cell, top, wide, bx: Math.round((W - bw) / 2), by: wide ? top + 6 : top + infoH + 2, bw, bh, ctrlY: H - ctrlH - 4 };
     }
     // 底部按钮：◀ ▶ | ▼ ⤓ | ⟳
     function buttons(l) {
       const w = 30, g = 5, y = l.ctrlY;
+      if (l.wide) {
+        // 左手：左右移动；右手：加速 / 落下 / 旋转
+        const R = l.W - 5 - w;
+        return [
+          { k: 'L', x: 8, y, w }, { k: 'R', x: 8 + w + g, y, w },
+          { k: 'D', x: R - (w + g) * 2, y, w }, { k: 'H', x: R - (w + g), y, w }, { k: 'U', x: R, y, w },
+        ];
+      }
       return [
         { k: 'L', x: 5, y, w }, { k: 'R', x: 5 + w + g, y, w },
         { k: 'D', x: 5 + (w + g) * 2, y, w }, { k: 'H', x: 5 + (w + g) * 3, y, w },
@@ -239,15 +251,25 @@
           G.text(f.text, l.bx + l.bw / 2, l.by + f.y * c - (1.2 - f.life) * 20, { color: '#ffd23f', align: 'center', shadow: '#1b1433' });
         }
 
-        // 棋盘上方的信息栏：下一块 / 得分 / 消除行数 / 最高分
-        const iy = l.top + 3;
-        G.text('NEXT', 6, iy, { color: '#ffd23f' });
-        for (const [cx, cy] of SHAPES[S.next]) drawGift(32 + cx * 5, iy - 1 + cy * 5, 5, S.next);
-        [['SCORE', S.score], ['LINES', S.lines], ['BEST', S.best]].forEach(([label, val], i) => {
-          const x = 62 + i * 40;
-          G.text(label, x, iy, { color: '#8ea0c8' });
-          G.text(String(val), x, iy + 10, { color: '#ffffff' });
-        });
+        // 信息：竖屏在棋盘上方排成一行；横屏放在棋盘左边一列
+        const iy = l.top + 3, stats = [['SCORE', S.score], ['LINES', S.lines], ['BEST', S.best]];
+        if (l.wide) {
+          G.text('NEXT', 8, l.by + 2, { color: '#ffd23f' });
+          G.rect(8, l.by + 12, 4 * 7 + 4, 2 * 7 + 4, '#0b0b1a');
+          for (const [cx, cy] of SHAPES[S.next]) drawGift(10 + cx * 7, l.by + 14 + cy * 7, 7, S.next);
+          stats.forEach(([label, val], i) => {
+            G.text(label, 8, l.by + 40 + i * 24, { color: '#8ea0c8' });
+            G.text(String(val), 8, l.by + 50 + i * 24, { color: '#ffffff' });
+          });
+        } else {
+          G.text('NEXT', 6, iy, { color: '#ffd23f' });
+          for (const [cx, cy] of SHAPES[S.next]) drawGift(32 + cx * 5, iy - 1 + cy * 5, 5, S.next);
+          stats.forEach(([label, val], i) => {
+            const x = 62 + i * 40;
+            G.text(label, x, iy, { color: '#8ea0c8' });
+            G.text(String(val), x, iy + 10, { color: '#ffffff' });
+          });
+        }
 
         // 结束画面
         if (S.over) {

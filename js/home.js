@@ -116,7 +116,7 @@
     };
     let wb = null;
     const dims = () => { const H2 = Math.ceil(G.H / 2); return { W2: G.W / 2, H2, gy: Math.round(H2 * 0.72) }; };
-    const camOf = () => G.clamp(Math.round(S.boy.x) - 45, 0, WORLD - G.W / 2);
+    const camOf = () => G.clamp(Math.round(S.boy.x) - Math.round(G.W / 4), 0, WORLD - G.W / 2);
     const ceilOf = gy => Math.max(12, gy - 72);   // 天花板的 y
 
     // ---------- 小工具 ----------
@@ -154,7 +154,7 @@
     }
     function dialog(text) {
       if (S.dialog) { S.queue.push(text); return; }
-      S.dialog = { lines: wrap(text, G.W - 36), age: 0 };
+      S.dialog = { lines: wrap(text, Math.min(G.W, 260) - 36), age: 0 };
     }
     function closeDialog() {
       S.dialog = null;
@@ -606,7 +606,7 @@
     function drawDialog() {
       const dg = S.dialog;
       if (!dg) return;
-      const h = dg.lines.length * 14 + 14, x = 8, y = 22, w = G.W - 16;
+      const w = Math.min(G.W, 260) - 16, h = dg.lines.length * 14 + 14, x = Math.round((G.W - w) / 2), y = 22;
       G.box(x, y, w, h, '#1b1433', '#ffffff');
       let n = Math.floor(dg.age * 24);
       dg.lines.forEach((ln, i) => {

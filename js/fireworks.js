@@ -11,8 +11,8 @@
     const A = G.audio, P = G.ART.sprites();
     const S = {
       t: 0, rockets: [], sparks: [], hearts: [], flashes: [], next: 0.4, count: 0,
-      flakes: Array.from({ length: 40 }, () => ({ x: G.rand(0, 90), y: G.rand(0, 200), v: G.rand(5, 10), ph: G.rand(0, 6) })),
-      stars: Array.from({ length: 30 }, () => ({ x: Math.floor(G.rand(0, 90)), y: Math.random(), p: G.rand(0, 6.28) })),
+      flakes: Array.from({ length: 70 }, () => ({ x: G.rand(0, 200), y: G.rand(0, 200), v: G.rand(5, 10), ph: G.rand(0, 6) })),
+      stars: Array.from({ length: 50 }, () => ({ x: Math.random(), y: Math.random(), p: G.rand(0, 6.28) })),
     };
     let wb = null, sky = null, skyKey = '';
     const dims = () => { const H2 = Math.ceil(G.H / 2); return { W2: G.W / 2, H2, gy: Math.round(H2 * 0.78) }; };
@@ -67,7 +67,7 @@
         for (const f of S.flakes) {
           f.y += f.v * dt;
           f.x += Math.sin(S.t + f.ph) * 0.08;
-          if (f.y > d.H2) { f.y = -2; f.x = G.rand(0, 90); }
+          if (f.y > d.H2) { f.y = -2; f.x = G.rand(0, d.W2); }
         }
         // 两人中间偶尔冒出小爱心
         if (Math.random() < dt * 0.8) S.hearts.push({ x: (COUPLE[0] + COUPLE[1]) / 2 * 2 - HOUSE_CAM * 2 + G.rand(-4, 4), y: d.gy * 2 - 44, life: 1.6 });
@@ -85,16 +85,16 @@
         if (skyKey !== W2 + 'x' + gy) { sky = G.bands(W2, gy, NIGHT); skyKey = W2 + 'x' + gy; }
         G.ctx.drawImage(sky, 0, 0);
         for (const s of S.stars) {
-          if (Math.sin(G.t * 3 + s.p) > -0.3) G.rect(s.x, Math.floor(s.y * (gy - 30)), 1, 1, '#c8c8ff');
+          if (Math.sin(G.t * 3 + s.p) > -0.3) G.rect(Math.floor(s.x * W2), Math.floor(s.y * (gy - 30)), 1, 1, '#c8c8ff');
         }
-        G.circle(78, 36, 5, '#fff3b0');
+        G.circle(W2 - 12, 36, 5, '#fff3b0');
         // 远处的雪山和松树剪影
         for (let i = 0; i < W2; i += 2) {
           const h = Math.round(16 + Math.sin(i * 0.07) * 5 + Math.sin(i * 0.17) * 2);
           G.rect(i, gy - h, 2, h, '#2b3a6e');
           G.rect(i, gy - h, 2, 1, '#8ea0c8');
         }
-        for (let k = 5; k < 10; k++) {
+        for (let k = 5; k * 10 < W2 + 10; k++) {
           const x = k * 10 + ((k * 7) % 5), h = 8 + ((k * 5) % 6);
           for (let j = 0; j < h; j++) G.rect(x - Math.floor(j / 2), gy - h + j, Math.floor(j / 2) * 2 + 1, 1, '#16243f');
         }
@@ -120,7 +120,7 @@
         G.rect(0, gy, W2, 1, '#ffffff');
         for (let x = 2; x < W2; x += 6) G.rect(x + (x * 13) % 4, gy + 3 + (x * 7) % 10, 2, 1, '#c4d4f0');
         G.ART.drawHouse(HOUSE_CAM, gy, false);
-        for (const f of S.flakes) G.rect(f.x, f.y, 1, 1, '#ffffff');
+        for (const f of S.flakes) G.rect(f.x % W2, f.y, 1, 1, '#ffffff');
 
         G.ctx = main;
         ctx.drawImage(wb, 0, 0, W2 * 2, H2 * 2);

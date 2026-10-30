@@ -4,7 +4,7 @@
   const ctx = canvas.getContext('2d');
 
   const G = window.G = {
-    W: 180,     // 逻辑宽度（像素数），高度按屏幕比例自动计算
+    W: 180,     // 逻辑分辨率：竖屏宽固定 180、高按比例；屏幕太宽（横屏）时改为高固定 240、宽按比例
     H: 320,
     t: 0,
     ctx,
@@ -19,10 +19,11 @@
   function resize() {
     const r = canvas.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const h = Math.max(240, Math.round(G.W * r.height / r.width));
-    if (h !== G.H || canvas.width !== G.W) {
-      G.H = h;
-      canvas.width = G.W;
+    let w = 180, h = Math.round(180 * r.height / r.width);
+    if (h < 240) { h = 240; w = Math.round(240 * r.width / r.height); }
+    if (w !== G.W || h !== G.H || canvas.width !== w || canvas.height !== h) {
+      G.W = w; G.H = h;
+      canvas.width = w;
       canvas.height = h;
     }
     ctx.imageSmoothingEnabled = false;

@@ -22,11 +22,11 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* 手机上铺满（包括折叠屏这种偏方的屏幕）；电脑上显示成一个竖屏窗口 */
+/* 竖屏、横屏都铺满；特别宽的屏幕（如电脑）最宽到 5:3 */
 #app {
   position: relative;
-  width: min(100vw, 76vh);
-  width: min(100vw, 76dvh);
+  width: min(100vw, 167vh);
+  width: min(100vw, 167dvh);
   height: 100vh;
   height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);

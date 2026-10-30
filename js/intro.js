@@ -23,7 +23,7 @@
   const FOREST = [[96, 14, 24], [108, 18, 30], [122, 12, 20], [136, 16, 28], [206, 18, 32], [218, 12, 22]];
   // 室内：树居中，两人分站左右（脚踩在树前一点，有前后层次）
   const IN_TREE_X = 45, IN_GIRL_X = 21, IN_BOY_X = 69, FEET = 5, N_ORN = 20, ORN_GAP = 0.17;
-  const treeH = gy => G.clamp(gy - 52, 46, 72);
+  const treeH = gy => G.clamp(gy - 52, 38, 72);   // 屏幕矮（横屏）时树也矮一点，星星不碰到标题
   const NIGHT = ['#0b0b1a', '#121436', '#1a1f4f', '#243066', '#2f4280'];
   const HANDLE = '#8a5a3c', METAL = '#9aa5b8';
   const ORN_COLORS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#ffffff', '#b388ff'];
@@ -393,8 +393,8 @@
   G.Intro = function () {
     const A = G.audio, P = sprites();
     const S = { phase: 'gift', gt: 0, open: 0, t: 0, ei: 0, parts: [], floats: [], hops: {}, heartT: 0, skipTap: null, leaving: 0, gone: false };
-    const flakes = Array.from({ length: 50 }, () => ({ x: G.rand(0, 90), y: G.rand(0, 200), v: G.rand(6, 14), ph: G.rand(0, 6) }));
-    const stars = Array.from({ length: 28 }, () => ({ x: Math.floor(G.rand(0, 90)), y: Math.random(), p: G.rand(0, 6.28) }));
+    const flakes = Array.from({ length: 90 }, () => ({ x: G.rand(0, 400), y: G.rand(0, 200), v: G.rand(6, 14), ph: G.rand(0, 6) }));
+    const stars = Array.from({ length: 50 }, () => ({ x: Math.random(), y: Math.random(), p: G.rand(0, 6.28) }));
     let wb = null, sky = null, skyKey = '';
 
     const dims = () => { const H2 = Math.ceil(G.H / 2); return { W2: G.W / 2, H2, gy: Math.round(H2 * 0.74) }; };
@@ -493,11 +493,12 @@
       if (skyKey !== W2 + 'x' + gy) { sky = G.bands(W2, gy, NIGHT); skyKey = W2 + 'x' + gy; }
       G.ctx.drawImage(sky, 0, 0);
       for (const s of stars) {
-        if (Math.sin(G.t * 3 + s.p) > -0.3) G.rect(s.x, Math.floor(s.y * (gy - 30)), 1, 1, '#c8c8ff');
+        if (Math.sin(G.t * 3 + s.p) > -0.3) G.rect(Math.floor(s.x * W2), Math.floor(s.y * (gy - 30)), 1, 1, '#c8c8ff');
       }
-      G.circle(70, 30, 7, '#fff3b0');
-      G.rect(67, 27, 2, 2, '#e8d98a');
-      G.rect(72, 32, 2, 1, '#e8d98a');
+      const mx = W2 - 20;
+      G.circle(mx, 30, 7, '#fff3b0');
+      G.rect(mx - 3, 27, 2, 2, '#e8d98a');
+      G.rect(mx + 2, 32, 2, 1, '#e8d98a');
       for (let i = 0; i < W2; i += 2) {
         const wx = i + cam * 0.25, h = Math.round(18 + Math.sin(wx * 0.06) * 6 + Math.sin(wx * 0.15) * 3);
         G.rect(i, gy - h, 2, h, '#2b3a6e');
@@ -538,7 +539,7 @@
       const { gy } = d, h = girl(t);
       // 人物位置先取整，镜头跟着整数走：人物在屏幕上稳定不动，不会和背景错位抖动
       h.x = Math.round(h.x);
-      const cam = G.clamp(h.x - 45, 0, WORLD - d.W2);
+      const cam = G.clamp(h.x - Math.round(d.W2 / 2), 0, WORLD - d.W2);
       drawOutdoorBg(cam, d);
       drawHouse(cam, gy, t < T.walk || t > T.fadeOut - 0.6);
       for (const [fx, w, hh] of FOREST) G.draw(P.forest[w + 'x' + hh], fx - w / 2 - cam, gy - hh);
@@ -583,6 +584,8 @@
       return c;
     }
 
+    const roomOx = d => Math.round((d.W2 - 90) / 2);
+
     function drawInside(t, d) {
       const { W2, H2, gy } = d;
       const flick = Math.floor(G.t * 10), lit = t >= T.lights;
@@ -613,8 +616,12 @@
         for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#b07848');
       }
 
+      // 屏幕比较宽（横屏）时，家具和人物整体居中，墙和地板铺满两边
+      G.ctx.save();
+      G.ctx.translate(roomOx(d), 0);
+
       // 亮灯后的暖光：先弱后强
-      if (lit && (t - T.lights > 0.25 || flick % 2)) G.ctx.drawImage(getHalo(W2, H2, gy), 0, 0);
+      if (lit && (t - T.lights > 0.25 || flick % 2)) G.ctx.drawImage(getHalo(90, H2, gy), 0, 0);
 
       // 左右两扇窗：窗外下雪，奶油色窗帘，窗台蜡烛
       const wy = Math.max(54, gy - 52);   // 屏幕偏方（如折叠屏）时往下让开标题
@@ -640,7 +647,7 @@
 
       // 两侧墙顶的松枝花环 + 暖色小灯（树亮灯后一起亮）
       const gl = wy - 9;
-      for (const [x0, x1] of [[0, 32], [58, W2]]) {
+      for (const [x0, x1] of [[0, 32], [58, 90]]) {
         for (let x = x0; x < x1; x++) {
           const y = gl + Math.round(Math.sin((x - x0) / (x1 - x0) * Math.PI) * 4);
           G.rect(x, y, 1, 3, '#1f6a43');
@@ -710,6 +717,7 @@
       G.rect(cat + 3, cy - br, 1, 1, '#ff9f1c');
       G.rect(cat + 2, cy + 2 - br, 1, 1, '#1b1433');
       G.rect(cat + 6, cy + 2 - br, 3, 1, '#ffd27a');
+      G.ctx.restore();
     }
 
     // ---------- 拆礼物的光芒 ----------
@@ -778,7 +786,7 @@
         for (const f of flakes) {
           f.y += f.v * dt;
           f.x += Math.sin(G.t + f.ph) * 0.1;
-          if (f.y > H2) { f.y = -2; f.x = G.rand(0, 90); }
+          if (f.y > H2) { f.y = -2; f.x = G.rand(0, 400); }
         }
         for (const p of S.parts) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
         S.parts = S.parts.filter(p => p.life > 0);
@@ -827,6 +835,7 @@
           ({ cam, h } = drawOutside(t, d));
         } else {
           drawInside(t, d);
+          cam = -roomOx(d);
         }
         for (const p of S.parts) {
           if (p.life < 0.2 && Math.floor(G.t * 20) % 2) continue;
@@ -848,8 +857,8 @@
             if (!h.hidden) drawAvatar(P.girl, (h.x - cam) * 2, gy2, Object.assign({ dy: hopY('girl') }, h));
           } else {
             const feet = (d.gy + FEET) * 2;
-            drawAvatar(P.girl, IN_GIRL_X * 2, feet, { dy: hopY('girl') });
-            drawAvatar(P.boy, IN_BOY_X * 2, feet, { dy: hopY('boy'), flip: true });
+            drawAvatar(P.girl, (IN_GIRL_X - cam) * 2, feet, { dy: hopY('girl') });
+            drawAvatar(P.boy, (IN_BOY_X - cam) * 2, feet, { dy: hopY('boy'), flip: true });
           }
         }
 
