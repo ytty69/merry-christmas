@@ -155,7 +155,7 @@
   }
 
   function drawCRT() {
-    ctx.fillStyle = 'rgba(0,0,0,0.10)';
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
     for (let y = 1; y < G.H; y += 2) ctx.fillRect(0, y, G.W, 1);
   }
 

@@ -496,13 +496,13 @@
           let col = null;
           if (y < gy) {
             const r = Math.hypot(i - IN_TREE_X, y - cy);
-            if (r < 20) col = (i + y) % 2 ? '#c88466' : '#b87258';
-            else if (r < 30) col = (i + y) % 2 ? '#b87258' : null;
-            else if (r < 40) col = (i + y) % 4 === 0 ? '#a86352' : null;
+            if (r < 20) col = (i + y) % 2 ? '#fff3cf' : '#fbe6b4';
+            else if (r < 30) col = (i + y) % 2 ? '#fbe6b4' : null;
+            else if (r < 40) col = (i + y) % 4 === 0 ? '#f6dcaa' : null;
           } else {
             const e = Math.hypot((i - IN_TREE_X) / 42, (y - gy - 4) / 10);
-            if (e < 0.6) col = (i + y) % 2 ? '#b88050' : null;
-            else if (e < 1) col = (i + y) % 4 === 0 ? '#a87044' : null;
+            if (e < 0.6) col = (i + y) % 2 ? '#dca46c' : null;
+            else if (e < 1) col = (i + y) % 4 === 0 ? '#d29a64' : null;
           }
           if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
         }
@@ -516,30 +516,30 @@
       const { W2, H2, gy } = d;
       const flick = Math.floor(G.t * 10), lit = t >= T.lights;
 
-      // 暖色墙纸 + 暗纹
-      G.rect(0, 0, W2, gy, '#9b4f4a');
+      // 奶油色墙纸 + 暗纹
+      G.rect(0, 0, W2, gy, '#f1e2c6');
       for (let y = 2, r = 0; y < gy - 18; y += 7, r++) {
         for (let x = (r % 2) * 4 + 1; x < W2; x += 8) {
-          G.rect(x + 1, y, 1, 1, '#a95c55');
-          G.rect(x, y + 1, 3, 1, '#a95c55');
-          G.rect(x + 1, y + 2, 1, 1, '#a95c55');
+          G.rect(x + 1, y, 1, 1, '#e7d2ae');
+          G.rect(x, y + 1, 3, 1, '#e7d2ae');
+          G.rect(x + 1, y + 2, 1, 1, '#e7d2ae');
         }
       }
       // 护墙板 + 腰线 + 踢脚线
-      G.rect(0, gy - 17, W2, 14, '#7a4e34');
+      G.rect(0, gy - 17, W2, 14, '#c08a5a');
       for (let x = 2; x < W2; x += 14) {
-        G.rect(x, gy - 14, 11, 9, '#6a422a');
-        G.rect(x, gy - 6, 11, 1, '#8a5c3e');
+        G.rect(x, gy - 14, 11, 9, '#b07a4c');
+        G.rect(x, gy - 6, 11, 1, '#d09a68');
       }
       G.rect(0, gy - 18, W2, 2, '#a06a46');
-      G.rect(0, gy - 18, W2, 1, '#b88058');
-      G.rect(0, gy - 3, W2, 3, '#4e2e1c');
+      G.rect(0, gy - 18, W2, 1, '#ecc08c');
+      G.rect(0, gy - 3, W2, 3, '#8a5a3c');
 
       // 木地板
-      G.rect(0, gy, W2, H2 - gy, '#946040');
+      G.rect(0, gy, W2, H2 - gy, '#c48a58');
       for (let y = gy + 5, n = 0; y < H2; y += 6, n++) {
-        G.rect(0, y, W2, 1, '#82522f');
-        for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#82522f');
+        G.rect(0, y, W2, 1, '#b07848');
+        for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#b07848');
       }
 
       // 亮灯后的暖光：先弱后强
@@ -548,22 +548,22 @@
       // 左右两扇窗：窗外下雪，奶油色窗帘，窗台蜡烛
       const wy = Math.max(46, gy - 52);
       for (const wx of [3, 71]) {
-        G.rect(wx - 1, wy - 1, 18, 20, '#f3e6c8');
+        G.rect(wx - 1, wy - 1, 18, 20, '#a06a46');
         G.rect(wx, wy, 16, 18, '#1a1f4f');
         G.rect(wx, wy, 16, 4, '#22285e');
         for (let i = 0; i < 6; i++) G.rect(wx + 1 + (i * 5 + wx) % 14, wy + Math.floor((G.t * 7 + i * 6) % 17), 1, 1, '#ffffff');
-        G.rect(wx + 7, wy, 2, 18, '#f3e6c8');
-        G.rect(wx, wy + 8, 16, 1, '#f3e6c8');
+        G.rect(wx + 7, wy, 2, 18, '#a06a46');
+        G.rect(wx, wy + 8, 16, 1, '#a06a46');
         G.rect(wx, wy + 16, 16, 2, '#ffffff');
         G.rect(wx - 2, wy + 18, 20, 2, '#a06a46');
         G.rect(wx + 11, wy + 14, 2, 4, '#fff6d0');
         G.rect(wx + 11, wy + 13, 1, 1, (flick + wx) % 3 ? '#ffd23f' : '#ff9f1c');
         for (const cx of [wx - 4, wx + 16]) {
-          G.rect(cx, wy - 2, 4, 22, '#e8d8b0');
-          G.rect(cx + (cx < wx ? 3 : 0), wy - 2, 1, 22, '#c8b48a');
+          G.rect(cx, wy - 2, 4, 22, '#2f8a55');
+          G.rect(cx + (cx < wx ? 3 : 0), wy - 2, 1, 22, '#1f6a43');
           G.rect(cx, wy + 9, 4, 1, '#c22f40');
         }
-        G.rect(wx - 5, wy - 4, 26, 3, '#f3e6c8');
+        G.rect(wx - 5, wy - 4, 26, 3, '#2f8a55');
         G.rect(wx - 5, wy - 2, 26, 1, '#d8b04a');
       }
 
@@ -574,7 +574,7 @@
           const y = gl + Math.round(Math.sin((x - x0) / (x1 - x0) * Math.PI) * 4);
           G.rect(x, y, 1, 3, '#1f6a43');
           if (x % 2) G.rect(x, y, 1, 1, '#4fae6c');
-          if ((x - x0) % 5 === 2) G.rect(x, y + 3, 1, 1, lit && (x + Math.floor(G.t * 2)) % 3 ? (x % 2 ? '#ffd23f' : '#fff6d0') : '#7a4e34');
+          if ((x - x0) % 5 === 2) G.rect(x, y + 3, 1, 1, lit && (x + Math.floor(G.t * 2)) % 3 ? (x % 2 ? '#ffd23f' : '#fff6d0') : '#c08a5a');
         }
         for (const bx of [x0 + 1, x1 - 4]) {
           G.rect(bx, gl - 1, 3, 2, '#e23b4b');
@@ -647,10 +647,10 @@
       if (t >= T.star) {
         const pulse = Math.floor(G.t * 3) % 2;
         const L = pulse ? 4 : 3;
-        G.rect(IN_TREE_X - 0.5, starY - L - 1, 1, L, '#fff3b0');
-        G.rect(starX - L - 1, starY + 3, L, 1, '#fff3b0');
-        G.rect(starX + 10, starY + 3, L, 1, '#fff3b0');
-        if (pulse) for (const [dx, dy] of [[-2, -2], [10, -2], [-2, 9], [10, 9]]) G.rect(starX + dx, starY + dy, 1, 1, '#fff6d0');
+        G.rect(IN_TREE_X - 0.5, starY - L - 1, 1, L, '#f5a623');
+        G.rect(starX - L - 1, starY + 3, L, 1, '#f5a623');
+        G.rect(starX + 10, starY + 3, L, 1, '#f5a623');
+        if (pulse) for (const [dx, dy] of [[-2, -2], [10, -2], [-2, 9], [10, 9]]) G.rect(starX + dx, starY + dy, 1, 1, '#ffd23f');
         G.draw(P.star, starX, starY);
 
         // 树周围随机一闪一闪的小星光
@@ -822,13 +822,13 @@
           const drop = (t0, ty) => Math.round(-40 + (ty + 40) * G.ease.outBounce(G.clamp((t - t0) / 0.8, 0, 1)));
           const bob = t > T.ready ? Math.round(Math.sin(G.t * 2) * 1.5) : 0;
           logo('MERRY', drop(T.title, 16) + bob, '#ff4d6d', 3);
-          logo('CHRISTMAS', drop(T.title + 0.25, 46) + bob, '#ffd23f', 2);
-          if (t > T.title + 1) G.text('~ 圣诞快乐 ~', W / 2, 72, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
+          logo('CHRISTMAS', drop(T.title + 0.25, 46) + bob, '#2f9e5e', 2);
+          if (t > T.title + 1) G.text('~ 圣诞快乐 ~', W / 2, 72, { color: '#a8283a', align: 'center', shadow: '#fff6d0' });
         }
         if (t >= T.ready) {
           const on = S.leaving ? Math.floor(G.t * 12) % 2 : Math.floor(G.t * 2.5) % 2 === 0;
           if (on) G.text('TAP TO CONTINUE', W / 2, gy2 + 28, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
-          G.text('点击屏幕继续', W / 2, gy2 + 46, { color: '#ffd23f', align: 'center', wave: true });
+          G.text('点击屏幕继续', W / 2, gy2 + 46, { color: '#8e2232', align: 'center', wave: true });
         }
       },
 
