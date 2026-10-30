@@ -870,8 +870,8 @@
         }
         if (t >= T.ready) {
           const on = S.leaving ? Math.floor(G.t * 12) % 2 : Math.floor(G.t * 2.5) % 2 === 0;
-          if (on) G.text('TAP TO CONTINUE', W / 2, gy2 + 28, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
-          G.text('点击屏幕继续', W / 2, gy2 + 46, { color: '#8e2232', align: 'center', wave: true });
+          if (on) G.text('TAP TO ENTER', W / 2, gy2 + 28, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
+          G.text('点击进入我们的家', W / 2, gy2 + 46, { color: '#8e2232', align: 'center', wave: true });
         }
       },
 
