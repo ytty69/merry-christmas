@@ -114,7 +114,6 @@
           break;
         case 'laser':
           S.beam = 0.25;
-          G.shake = 2;
           break;
         case 'boom': {
           const bx = G.rand(30, l.W - 30), by = G.rand(l.top + 20, l.groundY - 50);
@@ -124,8 +123,8 @@
             part({ x: bx, y: by, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 80, life: G.rand(0.4, 0.8), s: G.pick([2, 3]), c: G.pick(cols) });
           }
           S.rings.push({ x: bx, y: by, r: 2, life: 0.4, c: '#ffffff' });
-          G.shake = 7;
-          G.flash = 0.5;
+          G.shake = 3;
+          G.flash = 0.3;
           pix.flip = bx < pix.x;
           break;
         }

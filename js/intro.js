@@ -176,7 +176,6 @@
     HITS.forEach(h => at(h, () => {
       const { gy } = dims();
       A.play('chop');
-      G.shake = 1.5;
       for (let i = 0; i < 6; i++) {
         part({ x: TREE_X, y: gy - 4, vx: G.rand(-40, 30), vy: G.rand(-60, -20), g: 200, life: 0.5, c: G.pick(['#c8a070', '#ffffff']) });
       }
@@ -185,22 +184,26 @@
     at(T.land, () => {
       const { gy } = dims();
       A.play('thud');
-      G.shake = 5;
+      G.shake = 1.5;
       for (let i = 0; i < 16; i++) {
         part({ x: TREE_X + G.rand(0, 30), y: gy - 2, vx: G.rand(-20, 20), vy: G.rand(-40, -10), g: 80, life: 0.7, c: '#ffffff' });
       }
       float('TIMBER!', TREE_X + 18, gy - 20);
     });
-    at(T.land + 0.1, () => { A.play('jump'); hop('girl', 0.35, 12); });
-    P.spots.forEach((_, i) => at(T.deco + i * ORN_GAP, () => { A.play('ding', i); hop(i % 2 ? 'boy' : 'girl', 0.2, 6); }));
+    at(T.land + 0.1, () => { A.play('jump'); hop('girl', 0.4, 8); });
+    // 挂装饰时只偶尔轻轻跳一下，避免画面一直晃
+    P.spots.forEach((_, i) => at(T.deco + i * ORN_GAP, () => {
+      A.play('ding', i);
+      if (i % 4 === 0) hop(i % 8 ? 'boy' : 'girl', 0.35, 4);
+    }));
     at(T.lights, () => A.play('sparkle'));
-    at(T.throwStar, () => { A.play('jump'); hop('girl', 0.4, 16); });
+    at(T.throwStar, () => { A.play('jump'); hop('girl', 0.45, 12); });
     at(T.star, () => {
       const { gy } = dims();
       A.play('sparkle');
       A.play('ding', 11);
-      hop('boy', 0.35, 10);
-      G.flash = 0.4;
+      hop('boy', 0.4, 8);
+      G.flash = 0.25;
       for (let i = 0; i < 16; i++) {
         const a = i / 16 * Math.PI * 2;
         part({ x: IN_TREE_X, y: gy - 47, vx: Math.cos(a) * 40, vy: Math.sin(a) * 40, life: 0.6, c: G.pick(['#ffd23f', '#ffffff']) });
@@ -235,7 +238,7 @@
       const X = Math.round(sx), f = o.flip ? -1 : 1;
       const r = (ox, oy, w, h, c) => G.rect(f > 0 ? X + ox : X - ox - w, ground + oy, w, h, c);
       if (o.axe === 'shoulder') { r(-11, -32, 2, 22, HANDLE); r(-17, -35, 8, 6, METAL); r(-17, -35, 2, 6, '#ffffff'); }
-      const bob = o.walk ? -(Math.floor(S.t * 6) % 2) * 2 : 0;
+      const bob = o.walk ? -(Math.floor(S.t * 4) % 2) : 0;
       if (img.complete && img.naturalWidth) G.draw(img, X - 16, ground - 40 + bob + (o.dy || 0), 1, o.flip);
       if (o.axe === 'up') { r(8, -36, 2, 26, HANDLE); r(8, -40, 9, 6, METAL); r(15, -40, 2, 6, '#ffffff'); }
       if (o.axe === 'down') { r(8, -11, 12, 2, HANDLE); r(18, -15, 6, 9, METAL); r(22, -15, 2, 9, '#ffffff'); }
@@ -407,7 +410,9 @@
 
     function drawOutside(t, d) {
       const { gy } = d, h = girl(t);
-      const cam = Math.round(G.clamp(h.x - 45, 0, WORLD - d.W2));
+      // 人物位置先取整，镜头跟着整数走：人物在屏幕上稳定不动，不会和背景错位抖动
+      h.x = Math.round(h.x);
+      const cam = G.clamp(h.x - 45, 0, WORLD - d.W2);
       drawOutdoorBg(cam, d);
       drawHouse(cam, gy, t < T.walk || t > T.fadeOut - 0.6);
       for (const [fx, w, hh] of FOREST) G.draw(P.forest[w + 'x' + hh], fx - w / 2 - cam, gy - hh);
@@ -432,54 +437,140 @@
     // ---------- 室内 ----------
     function drawInside(t, d) {
       const { W2, H2, gy } = d;
+      const flick = Math.floor(G.t * 10);
+
+      // 墙纸：深绿底 + 菱形暗纹
       G.rect(0, 0, W2, gy, '#1e3a2f');
-      for (let x = 3; x < W2; x += 6) G.rect(x, 0, 1, gy, '#23443a');
-      G.rect(0, gy - 3, W2, 3, '#5a3d2b');
+      for (let y = 2, r = 0; y < gy - 18; y += 7, r++) {
+        for (let x = (r % 2) * 4 + 1; x < W2; x += 8) {
+          G.rect(x + 1, y, 1, 1, '#2a4d3f');
+          G.rect(x, y + 1, 3, 1, '#2a4d3f');
+          G.rect(x + 1, y + 2, 1, 1, '#2a4d3f');
+        }
+      }
+      // 护墙板 + 腰线 + 踢脚线
+      G.rect(0, gy - 17, W2, 14, '#5a3d2b');
+      for (let x = 2; x < W2; x += 14) {
+        G.rect(x, gy - 14, 11, 9, '#4a3122');
+        G.rect(x, gy - 14, 11, 1, '#3a2618');
+        G.rect(x, gy - 6, 11, 1, '#6f4b33');
+      }
+      G.rect(0, gy - 18, W2, 2, '#7a5236');
+      G.rect(0, gy - 18, W2, 1, '#9a6a46');
+      G.rect(0, gy - 3, W2, 3, '#3a2618');
 
       // 墙上的一串彩灯（树上的灯亮起后开始闪）
       const gl = gy - 62, blinkG = Math.floor(G.t * 3);
-      for (let x = 0; x < W2; x++) G.rect(x, gl + Math.round(Math.sin(x / W2 * Math.PI * 3) ** 2 * 4), 1, 1, '#16302a');
+      const sag = x => gl + Math.round(Math.sin(x / W2 * Math.PI * 3) ** 2 * 4);
+      for (let x = 0; x < W2; x++) G.rect(x, sag(x), 1, 1, '#16302a');
       for (let x = 4, i = 0; x < W2; x += 8, i++) {
-        const y = gl + Math.round(Math.sin(x / W2 * Math.PI * 3) ** 2 * 4) + 1;
         const lit = t >= T.lights && (i + blinkG) % 3 !== 0;
-        G.rect(x, y, 2, 2, lit ? ORN_COLORS[i % 3] : '#2b4a40');
+        G.rect(x, sag(x) + 1, 2, 2, lit ? ORN_COLORS[i % 3] : '#2b4a40');
       }
 
+      // 窗户：窗帘、帘头、窗台上的蜡烛
       const wx = 40, wy = gy - 46;
       G.rect(wx, wy, 20, 18, '#5a3d2b');
       G.rect(wx + 1, wy + 1, 18, 16, '#1a1f4f');
+      G.rect(wx + 13, wy + 3, 3, 3, '#fff3b0');
       for (let i = 0; i < 8; i++) {
         G.rect(wx + 2 + (i * 5) % 16, wy + 1 + Math.floor((G.t * 8 + i * 7) % 15), 1, 1, '#ffffff');
       }
       G.rect(wx + 9, wy + 1, 2, 16, '#5a3d2b');
       G.rect(wx + 1, wy + 8, 18, 1, '#5a3d2b');
       G.rect(wx + 1, wy + 15, 18, 2, '#ffffff');
+      G.rect(wx - 1, wy + 17, 22, 2, '#7a5236');
+      G.rect(wx + 3, wy + 13, 2, 4, '#fff6d0');
+      G.rect(wx + 3, wy + 12, 1, 1, flick % 3 ? '#ffd23f' : '#ff9f1c');
+      for (const cx of [wx - 4, wx + 19]) {
+        G.rect(cx, wy - 2, 5, 22, '#a8283a');
+        G.rect(cx + 2, wy - 2, 1, 22, '#c22f40');
+        G.rect(cx, wy + 9, 5, 1, '#ffd23f');
+      }
+      G.rect(wx - 5, wy - 4, 30, 3, '#c22f40');
+      for (let x = wx - 5; x < wx + 25; x += 3) G.rect(x + 1, wy - 1, 1, 1, '#c22f40');
 
-      const fx = 66;   // 壁炉左边
-      G.rect(fx + 6, gy - 42, 12, 10, '#ffd23f');
-      G.rect(fx + 7, gy - 41, 10, 8, '#fff6d0');
-      G.draw(G.SPR.heartS, fx + 9, gy - 40);
+      // 壁炉：照片、花环、蜡烛、袜子、炉火
+      const fx = 66;
+      G.rect(fx + 6, gy - 46, 12, 10, '#ffd23f');
+      G.rect(fx + 7, gy - 45, 10, 8, '#fff6d0');
+      G.draw(G.SPR.heartS, fx + 9, gy - 44);
       G.rect(fx, gy - 20, 24, 20, '#7a6e98');
-      for (let y = gy - 16; y < gy; y += 4) G.rect(fx, y, 24, 1, '#6b5f8a');
+      for (let y = gy - 16; y < gy; y += 4) {
+        G.rect(fx, y, 24, 1, '#6b5f8a');
+        G.rect(fx + ((y >> 2) % 2 ? 6 : 12), y - 3, 1, 3, '#6b5f8a');
+      }
       G.rect(fx + 5, gy - 12, 14, 12, '#1b1433');
-      const fl = Math.floor(G.t * 10);
       for (let i = 0; i < 5; i++) {
-        const h = 3 + ((fl + i * 3) % 4);
+        const h = 3 + ((flick + i * 3) % 4);
         G.rect(fx + 6 + Math.round(i * 2.4), gy - h - 1, 2, h, i % 2 ? '#ff9f1c' : '#ffd23f');
       }
       G.rect(fx + 6, gy - 2, 12, 2, '#5a3d2b');
       G.rect(fx - 2, gy - 22, 28, 3, '#5a3d2b');
+      G.rect(fx - 2, gy - 22, 28, 1, '#7a5236');
+      for (const cx of [fx + 1, fx + 21]) {
+        G.rect(cx, gy - 27, 2, 5, '#fff6d0');
+        G.rect(cx, gy - 28, 1, 1, (flick + cx) % 3 ? '#ffd23f' : '#ff9f1c');
+      }
+      G.rect(fx - 2, gy - 23, 28, 2, '#2f6e4a');
+      for (let x = fx - 1; x < fx + 26; x += 4) G.rect(x, gy - 22 + (x % 2), 1, 1, '#e23b4b');
+      G.rect(fx + 11, gy - 24, 3, 2, '#e23b4b');
       for (const sx of [fx + 3, fx + 14]) {
         G.rect(sx, gy - 20, 6, 2, '#ffffff');
         G.rect(sx + 1, gy - 18, 4, 6, '#e23b4b');
         G.rect(sx + 1, gy - 13, 6, 2, '#e23b4b');
       }
 
+      // 木地板 + 炉火映在地上的暖光
       G.rect(0, gy, W2, H2 - gy, '#7a4f32');
       for (let y = gy + 5, n = 0; y < H2; y += 6, n++) {
         G.rect(0, y, W2, 1, '#6a432a');
         for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#6a432a');
       }
+      for (let j = 0; j < 8; j++) {
+        for (let i = 0; i < 28 - j * 2; i++) {
+          if ((i + j + (flick >> 2)) % 3 === 0) G.rect(fx - 2 + j + i, gy + j, 1, 1, '#9a6a42');
+        }
+      }
+
+      // 两人脚下的圆地毯
+      const rcx = (IN_GIRL_X + IN_BOY_X) / 2, rcy = gy + 3;
+      for (let dy = -4; dy <= 4; dy++) {
+        const hw = Math.round(22 * Math.sqrt(1 - (dy / 4.6) ** 2));
+        G.rect(rcx - hw, rcy + dy, hw * 2, 1, '#a8283a');
+        if (Math.abs(dy) < 4) {
+          const iw = hw - 3;
+          G.rect(rcx - iw, rcy + dy, iw * 2, 1, '#c22f40');
+          G.rect(rcx - iw, rcy + dy, 1, 1, '#ffd23f');
+          G.rect(rcx + iw - 1, rcy + dy, 1, 1, '#ffd23f');
+        }
+      }
+      G.rect(rcx - 3, rcy, 6, 1, '#ffd23f');
+
+      // 炉火前睡觉的小猫（呼吸起伏 + 冒 z）
+      const cat = fx + 8, br = Math.floor(G.t * 1.2) % 2;
+      G.rect(cat, gy + 2, 10, 3, '#1b1433');
+      G.rect(cat + 1, gy + 1 - br, 8, 3, '#ff9f1c');
+      G.rect(cat + 1, gy + 3, 9, 1, '#e08e0b');
+      G.rect(cat + 1, gy - br, 1, 1, '#ff9f1c');
+      G.rect(cat + 3, gy - br, 1, 1, '#ff9f1c');
+      G.rect(cat + 2, gy + 2 - br, 1, 1, '#1b1433');
+      G.rect(cat + 6, gy + 2 - br, 3, 1, '#ffd27a');
+
+      // 挂在两人头顶的槲寄生（Mistletoe）
+      const mx = Math.round(rcx), my = gy - 26;
+      G.rect(mx, sag(mx) + 2, 1, my - sag(mx) - 2, '#c22f40');
+      G.rect(mx - 2, my - 2, 2, 2, '#e23b4b');
+      G.rect(mx + 1, my - 2, 2, 2, '#e23b4b');
+      G.rect(mx, my - 1, 1, 1, '#a8283a');
+      G.rect(mx - 5, my, 5, 2, '#2f9e5e');
+      G.rect(mx + 1, my, 5, 2, '#2f9e5e');
+      G.rect(mx - 4, my + 1, 3, 1, '#5cc47e');
+      G.rect(mx + 2, my + 1, 3, 1, '#5cc47e');
+      G.rect(mx - 2, my + 2, 5, 1, '#1f6e4a');
+      G.rect(mx - 1, my + 1, 1, 1, '#ffffff');
+      G.rect(mx + 1, my + 2, 1, 1, '#ffffff');
+      G.rect(mx, my + 3, 1, 1, '#ffffff');
 
       G.rect(IN_TREE_X - 15, gy - 1, 30, 2, '#e23b4b');
       G.rect(IN_TREE_X - 12, gy - 2, 24, 1, '#e23b4b');
@@ -498,11 +589,14 @@
         });
       }
       if (t >= T.star) {
-        G.rect(4, gy - 6, 7, 6, '#5bc0eb');
-        G.rect(7, gy - 6, 1, 6, '#ffffff');
-        G.rect(4, gy - 4, 7, 1, '#ffffff');
-        G.rect(34, gy - 5, 6, 5, '#b388ff');
-        G.rect(36, gy - 5, 2, 5, '#ffd23f');
+        // 树下的礼物
+        for (const [gx, gw, gh, c1, c2] of [[3, 7, 6, '#5bc0eb', '#ffffff'], [11, 6, 4, '#ffd23f', '#e23b4b'], [30, 6, 5, '#b388ff', '#ffd23f'], [36, 5, 3, '#ff7aa2', '#ffffff']]) {
+          G.rect(gx - 1, gy - gh - 1, gw + 2, gh + 1, '#1b1433');
+          G.rect(gx, gy - gh, gw, gh, c1);
+          G.rect(gx + (gw >> 1), gy - gh, 1, gh, c2);
+          G.rect(gx, gy - gh + (gh >> 1), gw, 1, c2);
+          G.rect(gx + (gw >> 1) - 1, gy - gh - 2, 3, 1, c2);
+        }
         G.draw(P.star, IN_TREE_X - 2, gy - 49);
         if (Math.floor(G.t * 3) % 2) {
           for (const [dx, dy] of [[-4, -4], [4, -4], [-4, 2], [4, 2]]) G.rect(IN_TREE_X + dx, gy - 47 + dy, 1, 1, '#fff6d0');
@@ -679,7 +773,7 @@
           A.unlock();
           A.play('pop');
           A.startBgm();
-          G.flash = 0.8;
+          G.flash = 0.5;
           S.open = 0.0001;
           const { W2, gy } = dims();
           for (let i = 0; i < 30; i++) {
