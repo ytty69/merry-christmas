@@ -711,12 +711,14 @@
       G.rect(x + 16, y, 1, 22, '#e08e0b');
       if (S.open) {
         const k = Math.min(1, S.open / 0.4);   // 光在 0.4 秒内慢慢展开
-        // 盒口的光团：实色像素，中心奶白 → 金黄 → 橙金，最外圈做抖动过渡
-        for (const [r, col, dith] of [[16 * k, '#f5b64a', true], [11 * k, '#ffd36b', false], [6 * k, '#fff6d0', false]]) {
+        // 盒口的光团：中心奶白 → 金黄 → 橙金，外圈用 2x2 抖动从密到疏逐渐淡出
+        // [半径, 颜色, 密度 1~4（4 为实色）]
+        const B = [[0, 2], [3, 1]];
+        for (const [r, col, lv] of [[23 * k, '#d9953c', 1], [18 * k, '#f5b64a', 2], [14 * k, '#f5b64a', 4], [9 * k, '#ffd36b', 4], [5 * k, '#fff6d0', 4]]) {
           for (let dy = 0; dy <= r; dy++) {
             const hw = Math.round(Math.sqrt(r * r - dy * dy) * 1.4);
-            if (!dith) G.rect(cx - hw, y - dy, hw * 2, 1, col);
-            else for (let i = -hw; i < hw; i++) if ((i + dy) % 2 === 0) G.rect(cx + i, y - dy, 1, 1, col);
+            if (lv === 4) { G.rect(cx - hw, y - dy, hw * 2, 1, col); continue; }
+            for (let i = -hw; i < hw; i++) if (B[dy & 1][i & 1] < lv) G.rect(cx + i, y - dy, 1, 1, col);
           }
         }
         // 从盒口放射出去的光芒，轻轻摆动
