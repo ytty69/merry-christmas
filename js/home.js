@@ -49,6 +49,33 @@
     { x0: 190, x1: 270, wall: '#dcefe4', pat: '#c6e2d2', kitchen: true }, // 餐厅
     { x0: 270, x1: 374, wall: '#f5dede', pat: '#ecc8c8' },              // 卧室
   ];
+  // 挂在衣架上的大衣：挂钩、木衣架、斜肩、垂下的两只袖子、V 领、双排扣、腰带、散开的下摆
+  const COAT_ROWS = [
+    '.......mm........',
+    '......m..m.......',
+    '........m........',
+    '...bbbbbbbbbbb...',
+    '..kkkkcwwwckkkk..',
+    'khskhcvwwwvcsksSk',
+    'khskhccvwvccsksSk',
+    'khskhcccvcccsksSk',
+    'khskhcycccycsksSk',
+    'khskhcccvcccsksSk',
+    'khskhcycvcycsksSk',
+    'khskhcccvcccsksSk',
+    'khskttttytttsksSk',
+    'khskhcccvcccsksSk',
+    'kttkhcccvcccskttk',
+    '..khccccvccccsk..',
+    '..khccccvccccsk..',
+    '..khccccvccccsk..',
+    '..khccccvccccsk..',
+    '..ksssssssssssk..',
+    '...kkkkk.kkkkk...',
+  ];
+  const COAT_PAL = { k: '#101632', s: '#26325e', S: '#1e2850', h: '#4a5c9e', c: '#34447e', v: '#26325e', w: '#f3e6c8', y: '#ffd23f', t: '#1a2248', b: '#8a5a3c', m: '#c0c8d8' };
+  let coatSpr = null;
+  const COAT = () => coatSpr || (coatSpr = G.makeSprite(COAT_ROWS, COAT_PAL));
   const FAIRY = [276, 284, 292, 300, 308, 316, 324, 332, 340, 348, 356, 364];   // 卧室墙上小星星灯的 x
 
   G.Home = function () {
@@ -164,7 +191,7 @@
       itemGy = gy;
       itemCache = [
         { id: 'door', r: [10, gy - 30, 24, 30], stand: 22, act() { dialog(T.door); A.play('blip'); sparkles(22, gy - 16, 8, 8); } },
-        { id: 'rack', r: [42, gy - 36, 14, 36], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
+        { id: 'rack', r: [40, gy - 41, 17, 41], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
         { id: 'cat', r: [92, gy, 14, 7], stand: 104, act() { dialog(T.cat); A.play('meow'); float('喵~', 99, gy - 4); hearts(99, gy, 3); } },
         { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
         {
@@ -308,24 +335,13 @@
       G.circle(X(22), gy - 19, 2, '#8a4a2c');
       G.rect(X(20), gy - 16, 4, 2, '#e23b4b');
       G.rect(X(12), gy, 20, 2, '#a8283a');
-      G.rect(X(48), gy - 32, 2, 32, '#6e4630');
+      // 衣帽架：顶上挂圣诞帽，下面衣架上挂着大衣
+      G.rect(X(48), gy - 37, 2, 37, '#6e4630');
       G.rect(X(44), gy - 2, 10, 2, '#6e4630');
-      // 挂着的外套：领子、袖子、中缝和金色纽扣、口袋
-      G.rect(X(41), gy - 29, 15, 17, '#141a38');
-      G.rect(X(44), gy - 28, 9, 15, '#2e3a6e');
-      G.rect(X(42), gy - 27, 2, 11, '#28325e');
-      G.rect(X(53), gy - 27, 2, 11, '#28325e');
-      G.rect(X(45), gy - 29, 7, 2, '#1e2850');
-      G.rect(X(48), gy - 28, 1, 3, '#f3e6c8');
-      G.rect(X(48), gy - 25, 1, 11, '#26305e');
-      for (const y of [gy - 24, gy - 20, gy - 16]) G.rect(X(49), y, 1, 1, '#ffd23f');
-      G.rect(X(45), gy - 18, 2, 1, '#1e2850');
-      G.rect(X(51), gy - 18, 2, 1, '#1e2850');
-      G.rect(X(44), gy - 14, 9, 1, '#1e2850');
-      G.rect(X(44), gy - 28, 1, 14, '#3a4a86');
-      G.rect(X(46), gy - 35, 6, 3, '#e23b4b');
-      G.rect(X(45), gy - 32, 8, 1, '#ffffff');
-      G.rect(X(52), gy - 36, 2, 2, '#ffffff');
+      G.rect(X(46), gy - 40, 6, 3, '#e23b4b');
+      G.rect(X(45), gy - 37, 8, 1, '#ffffff');
+      G.rect(X(52), gy - 41, 2, 2, '#ffffff');
+      G.draw(COAT(), X(40), gy - 33);
       G.rect(X(56), gy - 2, 4, 2, '#5a3d2b');
       G.rect(X(61), gy - 2, 4, 2, '#5a3d2b');
 
