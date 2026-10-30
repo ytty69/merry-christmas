@@ -29,13 +29,14 @@
   }
 
   // ---------- 绘制工具（坐标一律取整，保证像素对齐） ----------
-  G.rect = (x, y, w, h, c, cx = ctx) => {
+  // 默认画在 G.ctx 上；场景可以临时把 G.ctx 换成离屏画布
+  G.rect = (x, y, w, h, c, cx = G.ctx) => {
     cx.fillStyle = c;
     cx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
   };
 
   // 切角像素框
-  G.box = (x, y, w, h, fill, border, cx = ctx) => {
+  G.box = (x, y, w, h, fill, border, cx = G.ctx) => {
     x = Math.round(x); y = Math.round(y);
     cx.fillStyle = border;
     cx.fillRect(x + 1, y, w - 2, h);
@@ -45,7 +46,7 @@
   };
 
   // 阶梯像素圆
-  G.circle = (x, y, r, c, cx = ctx) => {
+  G.circle = (x, y, r, c, cx = G.ctx) => {
     cx.fillStyle = c;
     for (let dy = -r; dy <= r; dy++) {
       const hw = Math.round(Math.sqrt(r * r - dy * dy));
@@ -72,15 +73,16 @@
   };
 
   G.draw = (img, x, y, s = 1, flip = false) => {
+    const c = G.ctx;
     x = Math.round(x); y = Math.round(y);
     if (flip) {
-      ctx.save();
-      ctx.translate(x + img.width * s, y);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, img.width * s, img.height * s);
-      ctx.restore();
+      c.save();
+      c.translate(x + img.width * s, y);
+      c.scale(-1, 1);
+      c.drawImage(img, 0, 0, img.width * s, img.height * s);
+      c.restore();
     } else {
-      ctx.drawImage(img, x, y, img.width * s, img.height * s);
+      c.drawImage(img, x, y, img.width * s, img.height * s);
     }
   };
 

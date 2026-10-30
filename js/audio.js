@@ -99,36 +99,55 @@
     talk() {
       for (let i = 0; i < 3; i++) tone({ f: mf(G.pick([72, 74, 76, 79, 81])), dur: 0.05, at: i * 0.07, vol: 0.09 });
     },
+    crunch() { noise({ dur: 0.06, f: 1400, vol: 0.12 }); },
+    chop() {
+      noise({ dur: 0.09, f: 1800, f2: 300, vol: 0.5 });
+      tone({ f: 150, f2: 70, dur: 0.1, vol: 0.18 });
+    },
+    thud() {
+      noise({ dur: 0.6, f: 900, f2: 50, vol: 0.6 });
+      tone({ type: 'sine', f: 90, f2: 30, dur: 0.5, vol: 0.5 });
+    },
+    ding(i = 0) {
+      const m = [72, 74, 76, 79, 81, 84, 86, 88, 91, 93, 96, 98][i % 12];
+      tone({ type: 'sine', f: mf(m), dur: 0.7, vol: 0.22 });
+      tone({ type: 'triangle', f: mf(m + 12), dur: 0.25, vol: 0.06 });
+    },
+    sparkle() {
+      [84, 88, 91, 96, 100, 103].forEach((m, i) => tone({ type: 'triangle', f: mf(m), dur: 0.2, at: i * 0.04, vol: 0.12 }));
+    },
+    pop() {
+      noise({ dur: 0.12, f: 4000, f2: 500, vol: 0.4 });
+      SFX.sparkle();
+    },
   };
 
-  A.play = name => { if (A.ctx && SFX[name]) SFX[name](); };
+  A.play = (name, arg) => { if (A.ctx && SFX[name]) SFX[name](arg); };
   A.pluck = f => {
     tone({ type: 'triangle', f, dur: 0.3, vol: 0.35 });
     tone({ f: f * 2, dur: 0.08, vol: 0.04 });
   };
 
-  // ---------- 内置 8bit 背景乐（32 步循环，八分音符） ----------
-  const LEAD = [
-    72, 0, 76, 79, 84, 0, 79, 76,
-    77, 0, 81, 84, 81, 79, 77, 0,
-    76, 0, 79, 84, 88, 86, 84, 79,
-    81, 79, 76, 74, 72, 0, 0, 0,
-  ];
-  const BASS = [
-    48, 0, 55, 0, 48, 0, 55, 0,
-    53, 0, 60, 0, 53, 0, 60, 0,
-    57, 0, 64, 0, 57, 0, 64, 0,
-    55, 0, 62, 0, 55, 0, 59, 0,
-  ];
-  const STEP = 60 / 132 / 2;
+  // ---------- 背景乐：8bit《Jingle Bells》（公有领域旋律），1 步 = 八分音符 ----------
+  const E = 76, G5 = 79, C = 72, D = 74, F = 77;
+  const PART_A = [[E, 2], [E, 2], [E, 4], [E, 2], [E, 2], [E, 4], [E, 2], [G5, 2], [C, 3], [D, 1], [E, 8]];
+  const PART_B1 = [[F, 2], [F, 2], [F, 3], [F, 1], [F, 2], [E, 2], [E, 2], [E, 1], [E, 1], [E, 2], [D, 2], [D, 2], [E, 2], [D, 4], [G5, 4]];
+  const PART_B2 = [[F, 2], [F, 2], [F, 3], [F, 1], [F, 2], [E, 2], [E, 2], [E, 1], [E, 1], [G5, 2], [G5, 2], [F, 2], [D, 2], [C, 8]];
+  const CHORDS = 'CCCCFCGGCCCCFCGC';            // 每小节一个和弦
+  const BASS = { C: [48, 55], F: [53, 60], G: [43, 50] };
+  const LEAD = [];                               // LEAD[step] = [音高, 步数]
+  let pos = 0;
+  for (const [m, len] of [].concat(PART_A, PART_B1, PART_A, PART_B2)) { LEAD[pos] = [m, len]; pos += len; }
+  const STEPS = pos;
+  const STEP = 60 / 120 / 2;
   let timer = null, nextT = 0, step = 0;
 
   function playStep(i, t) {
     const bus = A.bgmBus;
-    if (LEAD[i]) tone({ t, f: mf(LEAD[i]), dur: STEP * 0.9, vol: 0.07, bus });
-    if (BASS[i]) tone({ t, type: 'triangle', f: mf(BASS[i]), dur: STEP * 1.8, vol: 0.28, bus });
-    if (i % 2 === 1) noise({ t, dur: 0.04, f: 7000, filter: 'highpass', vol: 0.12, bus });
-    if (i % 4 === 0) tone({ t, type: 'sine', f: 160, f2: 40, dur: 0.12, vol: 0.45, bus });
+    if (LEAD[i]) tone({ t, f: mf(LEAD[i][0]), dur: STEP * LEAD[i][1] * 0.85, vol: 0.07, bus });
+    if (i % 2 === 0) tone({ t, type: 'triangle', f: mf(BASS[CHORDS[i >> 3]][(i >> 1) % 2]), dur: STEP * 1.6, vol: 0.28, bus });
+    noise({ t, dur: 0.03, f: 8000, filter: 'highpass', vol: i % 2 ? 0.1 : 0.05, bus });   // 雪橇铃
+    if (i % 4 === 0) tone({ t, type: 'sine', f: 160, f2: 40, dur: 0.12, vol: 0.4, bus });
   }
 
   function schedule() {
@@ -136,7 +155,7 @@
       playStep(step, nextT);
       A.events.push({ t: nextT, step });
       nextT += STEP;
-      step = (step + 1) % LEAD.length;
+      step = (step + 1) % STEPS;
     }
   }
 

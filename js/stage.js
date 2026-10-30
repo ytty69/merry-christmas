@@ -243,7 +243,7 @@
         }
 
         // 顶栏
-        G.text('PIXEL PARTY', 5, 6, { color: '#ffd23f' });
+        G.text('MERRY XMAS', 5, 6, { color: '#ffd23f' });
         G.draw(G.SPR.coinS, l.W - 52, 6);
         G.text(String(S.coins).padStart(4, '0'), l.W - 45, 6, { color: '#ffffff' });
         G.draw(A.muted ? G.SPR.soundOff : G.SPR.soundOn, l.W - 13, 6);
