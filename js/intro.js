@@ -496,13 +496,13 @@
           let col = null;
           if (y < gy) {
             const r = Math.hypot(i - IN_TREE_X, y - cy);
-            if (r < 20) col = (i + y) % 2 ? '#6e3c2e' : '#5c3029';
-            else if (r < 30) col = (i + y) % 2 ? '#5c3029' : null;
-            else if (r < 40) col = (i + y) % 4 === 0 ? '#4c2827' : null;
+            if (r < 20) col = (i + y) % 2 ? '#c88466' : '#b87258';
+            else if (r < 30) col = (i + y) % 2 ? '#b87258' : null;
+            else if (r < 40) col = (i + y) % 4 === 0 ? '#a86352' : null;
           } else {
             const e = Math.hypot((i - IN_TREE_X) / 42, (y - gy - 4) / 10);
-            if (e < 0.6) col = (i + y) % 2 ? '#9a6238' : null;
-            else if (e < 1) col = (i + y) % 4 === 0 ? '#8a5634' : null;
+            if (e < 0.6) col = (i + y) % 2 ? '#b88050' : null;
+            else if (e < 1) col = (i + y) % 4 === 0 ? '#a87044' : null;
           }
           if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
         }
@@ -517,29 +517,29 @@
       const flick = Math.floor(G.t * 10), lit = t >= T.lights;
 
       // 暖色墙纸 + 暗纹
-      G.rect(0, 0, W2, gy, '#3b1e22');
+      G.rect(0, 0, W2, gy, '#9b4f4a');
       for (let y = 2, r = 0; y < gy - 18; y += 7, r++) {
         for (let x = (r % 2) * 4 + 1; x < W2; x += 8) {
-          G.rect(x + 1, y, 1, 1, '#4a272c');
-          G.rect(x, y + 1, 3, 1, '#4a272c');
-          G.rect(x + 1, y + 2, 1, 1, '#4a272c');
+          G.rect(x + 1, y, 1, 1, '#a95c55');
+          G.rect(x, y + 1, 3, 1, '#a95c55');
+          G.rect(x + 1, y + 2, 1, 1, '#a95c55');
         }
       }
       // 护墙板 + 腰线 + 踢脚线
-      G.rect(0, gy - 17, W2, 14, '#4a2e20');
+      G.rect(0, gy - 17, W2, 14, '#7a4e34');
       for (let x = 2; x < W2; x += 14) {
-        G.rect(x, gy - 14, 11, 9, '#3c2418');
-        G.rect(x, gy - 6, 11, 1, '#5e3a26');
+        G.rect(x, gy - 14, 11, 9, '#6a422a');
+        G.rect(x, gy - 6, 11, 1, '#8a5c3e');
       }
-      G.rect(0, gy - 18, W2, 2, '#6e4630');
-      G.rect(0, gy - 18, W2, 1, '#8a5a3c');
-      G.rect(0, gy - 3, W2, 3, '#2e1a12');
+      G.rect(0, gy - 18, W2, 2, '#a06a46');
+      G.rect(0, gy - 18, W2, 1, '#b88058');
+      G.rect(0, gy - 3, W2, 3, '#4e2e1c');
 
       // 木地板
-      G.rect(0, gy, W2, H2 - gy, '#6e4429');
+      G.rect(0, gy, W2, H2 - gy, '#946040');
       for (let y = gy + 5, n = 0; y < H2; y += 6, n++) {
-        G.rect(0, y, W2, 1, '#5e3a22');
-        for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#5e3a22');
+        G.rect(0, y, W2, 1, '#82522f');
+        for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#82522f');
       }
 
       // 亮灯后的暖光：先弱后强
@@ -555,7 +555,7 @@
         G.rect(wx + 7, wy, 2, 18, '#f3e6c8');
         G.rect(wx, wy + 8, 16, 1, '#f3e6c8');
         G.rect(wx, wy + 16, 16, 2, '#ffffff');
-        G.rect(wx - 2, wy + 18, 20, 2, '#6e4630');
+        G.rect(wx - 2, wy + 18, 20, 2, '#a06a46');
         G.rect(wx + 11, wy + 14, 2, 4, '#fff6d0');
         G.rect(wx + 11, wy + 13, 1, 1, (flick + wx) % 3 ? '#ffd23f' : '#ff9f1c');
         for (const cx of [wx - 4, wx + 16]) {
@@ -574,7 +574,7 @@
           const y = gl + Math.round(Math.sin((x - x0) / (x1 - x0) * Math.PI) * 4);
           G.rect(x, y, 1, 3, '#1f6a43');
           if (x % 2) G.rect(x, y, 1, 1, '#4fae6c');
-          if ((x - x0) % 5 === 2) G.rect(x, y + 3, 1, 1, lit && (x + Math.floor(G.t * 2)) % 3 ? (x % 2 ? '#ffd23f' : '#fff6d0') : '#6e4630');
+          if ((x - x0) % 5 === 2) G.rect(x, y + 3, 1, 1, lit && (x + Math.floor(G.t * 2)) % 3 ? (x % 2 ? '#ffd23f' : '#fff6d0') : '#7a4e34');
         }
         for (const bx of [x0 + 1, x1 - 4]) {
           G.rect(bx, gl - 1, 3, 2, '#e23b4b');
