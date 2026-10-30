@@ -698,6 +698,30 @@
       G.rect(cat + 6, cy + 2 - br, 3, 1, '#ffd27a');
     }
 
+    // ---------- 拆礼物的光芒 ----------
+    // 半圆范围内逐像素判断：落在扇形光带里就上色（实色、硬边，光带缓慢旋转）
+    const BR = 42;
+    const burstCv = G.makeCanvas(BR * 2, BR), burstCtx = burstCv.getContext('2d');
+    const burstImg = burstCtx.createImageData(BR * 2, BR);
+    const BURST_COL = [[255, 246, 208], [255, 226, 138], [240, 176, 74]];
+    function drawBurst(cx, y, k) {
+      const R = BR * k, d = burstImg.data, rot = G.t * 0.5, slot = Math.PI / 13;
+      d.fill(0);
+      for (let j = 0; j < BR; j++) {
+        for (let i = 0; i < BR * 2; i++) {
+          const dx = i + 0.5 - BR, dy = BR - j - 0.5, r = Math.hypot(dx, dy);
+          if (r > R) continue;
+          const ang = Math.atan2(dx, dy), band = (((ang + rot) / slot) % 2 + 2) % 2;
+          // 只保留朝上 ±65° 的光芒，光带占 40%，看起来更细更利落
+          if (r >= 7 && (band >= 0.8 || Math.abs(ang) > 1.13)) continue;
+          const c = BURST_COL[r < 7 ? 0 : r < R * 0.5 ? 1 : 2], o = (j * BR * 2 + i) * 4;
+          d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+        }
+      }
+      burstCtx.putImageData(burstImg, 0, 0);
+      G.ctx.drawImage(burstCv, Math.round(cx - BR), Math.round(y - BR));
+    }
+
     // ---------- 礼物盒 ----------
     function drawGift(d) {
       const { W2, gy } = d, cx = W2 / 2;
@@ -710,23 +734,8 @@
       G.rect(x + 13, y, 4, 22, '#ffd23f');
       G.rect(x + 16, y, 1, 22, '#e08e0b');
       if (S.open) {
-        const k = Math.min(1, S.open / 0.4);   // 光在 0.4 秒内慢慢展开
-        // 盒口的光团：中心奶白 → 金黄 → 橙金，外圈用 2x2 抖动从密到疏逐渐淡出
-        // [半径, 颜色, 密度 1~4（4 为实色）]
-        const B = [[0, 2], [3, 1]];
-        for (const [r, col, lv] of [[23 * k, '#d9953c', 1], [18 * k, '#f5b64a', 2], [14 * k, '#f5b64a', 4], [9 * k, '#ffd36b', 4], [5 * k, '#fff6d0', 4]]) {
-          for (let dy = 0; dy <= r; dy++) {
-            const hw = Math.round(Math.sqrt(r * r - dy * dy) * 1.4);
-            if (lv === 4) { G.rect(cx - hw, y - dy, hw * 2, 1, col); continue; }
-            for (let i = -hw; i < hw; i++) if (B[dy & 1][i & 1] < lv) G.rect(cx + i, y - dy, 1, 1, col);
-          }
-        }
-        // 从盒口放射出去的光芒，轻轻摆动
-        const sway = Math.sin(G.t * 1.5) * 0.08;
-        for (let i = -3; i <= 3; i++) {
-          const a = i * 0.32 + sway, len = (i % 2 ? 36 : 50) * k;
-          for (let r = 4; r < len; r++) G.rect(cx + Math.sin(a) * r, y - Math.cos(a) * r, 1, 1, r > len - 8 ? '#ffe9a0' : '#fff6d0');
-        }
+        // 从盒口放射的旋转光芒（0.4 秒内展开）
+        drawBurst(cx, y, Math.min(1, S.open / 0.4));
         G.rect(x + 1, y - 1, 28, 2, '#fff6d0');
       }
       const ly = y - 6 + (S.open ? -Math.round(S.open * 120) : (wiggle ? -1 : 0)), lx = x + (S.open ? Math.round(S.open * 30) : 0);
