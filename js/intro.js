@@ -1,7 +1,7 @@
 /* 开场：拆礼物 → 她去森林砍树（他在窗边等）→ 拖回家 → 两人一起装饰圣诞树 → MERRY CHRISTMAS
    场景画在一半分辨率的离屏画布上（90px 宽）再放大 2 倍；两个角色和文字画在原分辨率上 */
 (function () {
-  const TO = '你';   // 礼物盒上的称呼：「给 TO 的圣诞礼物」，可以改成他的名字或昵称
+  const TO = '小邹';   // 礼物盒上的称呼：「给 TO 的圣诞礼物」，可以改成他的名字或昵称
 
   // ---------- 剧情时间轴（秒，从拆开礼物后开始算） ----------
   const T = {
@@ -549,9 +549,9 @@
 
         if (S.phase === 'gift') {
           if (S.open) return;
-          G.text('给' + TO + '的圣诞礼物', W / 2, Math.round(G.H * 0.2), { color: '#ffd23f', align: 'center', shadow: '#1b1433', wave: true });
-          if (Math.floor(G.t * 2.5) % 2 === 0) G.text('TAP TO OPEN', W / 2, gy2 + 22, { color: '#1b1433', align: 'center' });
-          G.text('点击拆开', W / 2, gy2 + 38, { color: '#e23b4b', align: 'center' });
+          // 放在月亮下方，避免和月亮重叠
+          G.text('给' + TO + '的圣诞礼物', W / 2, Math.max(90, Math.round(G.H * 0.3)), { color: '#ffd23f', align: 'center', shadow: '#1b1433', wave: true });
+          if (Math.floor(G.t * 2.5) % 2 === 0) G.text('TAP TO OPEN', W / 2, gy2 + 26, { color: '#1b1433', align: 'center' });
           G.text('(记得打开声音哦)', W / 2, G.H - 22, { color: '#8ea0c8', align: 'center' });
           return;
         }
