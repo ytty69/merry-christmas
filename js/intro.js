@@ -482,13 +482,15 @@
       G.rect(wx - 1, wy + 17, 22, 2, '#7a5236');
       G.rect(wx + 3, wy + 13, 2, 4, '#fff6d0');
       G.rect(wx + 3, wy + 12, 1, 1, flick % 3 ? '#ffd23f' : '#ff9f1c');
+      // 奶油色窗帘（和红色的爱心、蝴蝶结拉开对比）
       for (const cx of [wx - 4, wx + 19]) {
-        G.rect(cx, wy - 2, 5, 22, '#a8283a');
-        G.rect(cx + 2, wy - 2, 1, 22, '#c22f40');
-        G.rect(cx, wy + 9, 5, 1, '#ffd23f');
+        G.rect(cx, wy - 2, 5, 22, '#e8d8b0');
+        G.rect(cx + 2, wy - 2, 1, 22, '#c8b48a');
+        G.rect(cx, wy + 9, 5, 1, '#c22f40');
       }
-      G.rect(wx - 5, wy - 4, 30, 3, '#c22f40');
-      for (let x = wx - 5; x < wx + 25; x += 3) G.rect(x + 1, wy - 1, 1, 1, '#c22f40');
+      G.rect(wx - 5, wy - 4, 30, 3, '#f3e6c8');
+      G.rect(wx - 5, wy - 2, 30, 1, '#d8b04a');
+      for (let x = wx - 5; x < wx + 25; x += 3) G.rect(x + 1, wy - 1, 1, 1, '#f3e6c8');
 
       // 壁炉：照片、花环、蜡烛、袜子、炉火
       const fx = 66;
@@ -559,7 +561,7 @@
 
       // 挂在两人头顶的槲寄生（Mistletoe）
       const mx = Math.round(rcx), my = gy - 26;
-      G.rect(mx, sag(mx) + 2, 1, my - sag(mx) - 2, '#c22f40');
+      G.rect(mx, sag(mx) + 2, 1, my - sag(mx) - 2, '#d8b04a');
       G.rect(mx - 2, my - 2, 2, 2, '#e23b4b');
       G.rect(mx + 1, my - 2, 2, 2, '#e23b4b');
       G.rect(mx, my - 1, 1, 1, '#a8283a');
