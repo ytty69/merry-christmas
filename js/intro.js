@@ -485,26 +485,21 @@
     }
 
     // ---------- 室内 ----------
-    // 树亮灯后墙上和地上的暖光（抖动点阵，按尺寸缓存）
+    // 树亮灯后墙上和地上的暖光：三层半透明暖白色的阶梯圆，只把底下的颜色提亮，不引入新颜色
     let halo = null, haloKey = '';
     function getHalo(W2, H2, gy) {
       const key = W2 + 'x' + H2 + 'x' + gy;
       if (halo && haloKey === key) return halo;
       const c = G.makeCanvas(W2, H2), x = c.getContext('2d'), cy = gy - 30;
-      for (let y = 0; y < H2; y++) {
-        for (let i = 0; i < W2; i++) {
-          let col = null;
-          if (y < gy) {
-            const r = Math.hypot(i - IN_TREE_X, y - cy);
-            if (r < 20) col = (i + y) % 2 ? '#fff3cf' : '#fbe6b4';
-            else if (r < 30) col = (i + y) % 2 ? '#fbe6b4' : null;
-            else if (r < 40) col = (i + y) % 4 === 0 ? '#f6dcaa' : null;
-          } else {
-            const e = Math.hypot((i - IN_TREE_X) / 42, (y - gy - 4) / 10);
-            if (e < 0.6) col = (i + y) % 2 ? '#dca46c' : null;
-            else if (e < 1) col = (i + y) % 4 === 0 ? '#d29a64' : null;
-          }
-          if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
+      x.fillStyle = 'rgba(255,246,222,0.16)';
+      for (const r of [42, 31, 20]) {
+        for (let y = 0; y < gy; y += 2) {
+          const dy = y + 1 - cy, hw = r * r - dy * dy;
+          if (hw > 0) { const w = Math.round(Math.sqrt(hw) / 2) * 2; x.fillRect(IN_TREE_X - w, y, w * 2, 2); }
+        }
+        for (let y = gy; y < H2; y += 2) {
+          const dy = (y + 1 - gy - 3) * 4, hw = r * r - dy * dy;
+          if (hw > 0) { const w = Math.round(Math.sqrt(hw) / 2) * 2; x.fillRect(IN_TREE_X - w, y, w * 2, 2); }
         }
       }
       halo = c;
