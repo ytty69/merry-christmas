@@ -22,7 +22,7 @@
     mistletoeShort: '槲寄生下要亲亲哦~',
     items: {
       door: '外面在下雪呢\n今天哪儿也不去，就在家陪你~',
-      rack: '你的围巾我挂好啦\n出门记得戴上，别着凉',
+      rack: '你的外套我挂好啦\n出门记得穿上，别着凉',
       sofa: '沙发上还留着\n我们一起盖的小毯子',
       cat: '喵~（它说它也想要圣诞礼物）',
       tree: '我们一起装饰的圣诞树\n今年最好看的一棵！',
@@ -42,14 +42,14 @@
   };
 
   // ================= 布局（世界坐标，半分辨率像素） =================
-  const WORLD = 320, GIRL_X = 146, TREE_X = 122, SPEED = 34, BTN = 40, FEET = 3;
+  const WORLD = 374, GIRL_X = 146, TREE_X = 122, SPEED = 34, BTN = 40, FEET = 3;
   const ROOMS = [
     { x0: 0, x1: 70, wall: '#efe0c2', pat: '#e2cda6' },                 // 玄关
     { x0: 70, x1: 190, wall: '#f1e2c6', pat: '#e7d2ae' },               // 客厅
-    { x0: 190, x1: 250, wall: '#dcefe4', pat: '#c6e2d2', kitchen: true }, // 餐厅
-    { x0: 250, x1: 320, wall: '#f5dede', pat: '#ecc8c8' },              // 卧室
+    { x0: 190, x1: 270, wall: '#dcefe4', pat: '#c6e2d2', kitchen: true }, // 餐厅
+    { x0: 270, x1: 374, wall: '#f5dede', pat: '#ecc8c8' },              // 卧室
   ];
-  const FAIRY = [256, 264, 272, 280, 288, 296, 304, 312];   // 卧室墙上小星星灯的 x
+  const FAIRY = [276, 284, 292, 300, 308, 316, 324, 332, 340, 348, 356, 364];   // 卧室墙上小星星灯的 x
 
   G.Home = function () {
     const A = G.audio, ART = G.ART, P = ART.sprites();
@@ -185,19 +185,27 @@
         { id: 'stocking', r: [159, gy - 21, 22, 11], stand: 170, act() { dialog(T.stocking); A.play('coin'); float('♥', 170, gy - 24, '#ff4d6d'); } },
         { id: 'fireplace', r: [156, gy - 23, 28, 23], stand: 170, act() { dialog(T.fireplace); S.fire = S.t; A.play('crunch'); later(0.15, () => A.play('crunch')); } },
         { id: 'oven', r: [195, gy - 15, 20, 15], stand: 205, act() { dialog(T.oven); S.oven = S.t; A.play('ding', 8); } },
-        { id: 'fridge', r: [216, gy - 36, 16, 36], stand: 224, act() { dialog(T.fridge); A.play('blip'); } },
-        { id: 'cocoa', r: [230, gy - 20, 20, 20], stand: 240, act() { dialog(T.cocoa); A.play('ding', 3); hearts(240, gy - 18, 3); } },
-        { id: 'window', r: [255, gy - 54, 24, 24], stand: 266, act() { dialog(T.window); S.shoot = S.t; A.play('sparkle'); } },
+        { id: 'fridge', r: [221, gy - 36, 16, 36], stand: 229, act() { dialog(T.fridge); A.play('blip'); } },
+        { id: 'cocoa', r: [244, gy - 20, 22, 20], stand: 255, act() { dialog(T.cocoa); A.play('ding', 3); hearts(255, gy - 18, 3); } },
+        { id: 'window', r: [275, gy - 54, 24, 24], stand: 286, act() { dialog(T.window); S.shoot = S.t; A.play('sparkle'); } },
         {
-          id: 'record', r: [251, gy - 18, 16, 18], stand: 258, act() {
+          id: 'record', r: [273, gy - 18, 16, 18], stand: 280, act() {
             A.toggleBgm();
             dialog(A.bgmOn ? T.recordOn : T.recordOff);
             A.play('blip');
           },
         },
-        { id: 'bed', r: [268, gy - 15, 36, 15], stand: 284, act() { dialog(T.bed); A.play('jump'); hop('boy', 0.4, 8); } },
         {
-          id: 'lamp', r: [305, gy - 28, 14, 28], stand: 308, act() {
+          // 电视游戏机：进入「圣诞礼物方块」小游戏
+          id: 'game', r: [294, gy - 28, 22, 28], stand: 305, act() {
+            A.play('coin');
+            S.hold = {};
+            later(0.3, () => G.transition(() => G.BlockGame(scene)));
+          },
+        },
+        { id: 'bed', r: [322, gy - 15, 37, 15], stand: 338, act() { dialog(T.bed); A.play('jump'); hop('boy', 0.4, 8); } },
+        {
+          id: 'lamp', r: [359, gy - 28, 14, 28], stand: 362, act() {
             S.lampOff = !S.lampOff;
             dialog(S.lampOff ? T.lampOff : T.lampOn);
             A.play('blip');
@@ -266,7 +274,7 @@
       const { W2, gy } = d, X = x => x - cam, flick = Math.floor(G.t * 10);
       ROOMS.forEach(r => drawRoom(r, cam, d));
       // 房间之间的柱子 + 顶上的木梁
-      for (const bx of [70, 190, 250]) {
+      for (const bx of [70, 190, 270]) {
         G.rect(X(bx) - 2, 0, 4, gy, '#b07a4c');
         G.rect(X(bx) - 2, 0, 1, gy, '#d09a68');
       }
@@ -278,7 +286,7 @@
       G.rect(0, ceil - 2, W2, 2, '#d09a68');
       G.rect(0, ceil, W2, 1, '#a06a46');
       // 吊灯：玄关一盏小灯笼，餐厅一盏绿色吊灯
-      for (const [lx, len, shade] of [[58, 10, '#2b2b3a'], [240, 14, '#2f8a55']]) {
+      for (const [lx, len, shade] of [[58, 10, '#2b2b3a'], [255, 14, '#2f8a55']]) {
         G.rect(X(lx), ceil, 1, len, '#3a2a1e');
         G.rect(X(lx) - 3, ceil + len, 7, 3, shade);
         G.rect(X(lx) - 1, ceil + len + 3, 3, 1, (flick % 7) ? '#ffd23f' : '#ffb347');
@@ -302,8 +310,19 @@
       G.rect(X(12), gy, 20, 2, '#a8283a');
       G.rect(X(48), gy - 32, 2, 32, '#6e4630');
       G.rect(X(44), gy - 2, 10, 2, '#6e4630');
-      G.rect(X(45), gy - 30, 8, 1, '#6e4630');
-      for (let i = 0; i < 12; i++) G.rect(X(44), gy - 29 + i, 3, 1, i % 3 ? '#e23b4b' : '#ffffff');
+      // 挂着的外套：领子、袖子、中缝和金色纽扣、口袋
+      G.rect(X(41), gy - 29, 15, 17, '#141a38');
+      G.rect(X(44), gy - 28, 9, 15, '#2e3a6e');
+      G.rect(X(42), gy - 27, 2, 11, '#28325e');
+      G.rect(X(53), gy - 27, 2, 11, '#28325e');
+      G.rect(X(45), gy - 29, 7, 2, '#1e2850');
+      G.rect(X(48), gy - 28, 1, 3, '#f3e6c8');
+      G.rect(X(48), gy - 25, 1, 11, '#26305e');
+      for (const y of [gy - 24, gy - 20, gy - 16]) G.rect(X(49), y, 1, 1, '#ffd23f');
+      G.rect(X(45), gy - 18, 2, 1, '#1e2850');
+      G.rect(X(51), gy - 18, 2, 1, '#1e2850');
+      G.rect(X(44), gy - 14, 9, 1, '#1e2850');
+      G.rect(X(44), gy - 28, 1, 14, '#3a4a86');
       G.rect(X(46), gy - 35, 6, 3, '#e23b4b');
       G.rect(X(45), gy - 32, 8, 1, '#ffffff');
       G.rect(X(52), gy - 36, 2, 2, '#ffffff');
@@ -406,12 +425,13 @@
       G.rect(cat + 2, gy + 3 - br, 1, 1, '#1b1433');
       G.rect(cat + 6, gy + 3 - br, 3, 1, '#ffd27a');
 
-      // ===== 餐厅 =====
-      G.rect(X(194), gy - 58, 36, 14, '#f3e6c8');
-      for (const x of [194, 206, 218]) G.rect(X(x), gy - 58, 1, 14, '#c8b48a');
-      G.rect(X(194), gy - 45, 36, 1, '#c8b48a');
-      G.rect(X(232), gy - 40, 16, 2, '#a06a46');
-      for (const [x, c] of [[233, '#e23b4b'], [237, '#ffd23f'], [241, '#2f8a55'], [245, '#5bc0eb']]) G.rect(X(x), gy - 44, 3, 4, c);
+      // ===== 餐厅（190~270） =====
+      G.rect(X(194), gy - 58, 44, 14, '#f3e6c8');
+      for (const x of [194, 205, 216, 227]) G.rect(X(x), gy - 58, 1, 14, '#c8b48a');
+      for (const x of [203, 214, 225, 236]) G.rect(X(x), gy - 52, 1, 2, '#a06a46');
+      G.rect(X(194), gy - 45, 44, 1, '#c8b48a');
+      G.rect(X(246), gy - 40, 20, 2, '#a06a46');
+      for (const [x, c] of [[248, '#e23b4b'], [252, '#ffd23f'], [256, '#2f8a55'], [260, '#5bc0eb']]) G.rect(X(x), gy - 44, 3, 4, c);
       // 料理台 + 烤箱（点击后发光）
       G.rect(X(194), gy - 14, 22, 14, '#c08a5a');
       G.rect(X(193), gy - 15, 24, 2, '#e8e0d0');
@@ -420,60 +440,86 @@
       for (const x of [200, 203, 206]) G.rect(X(x), gy - 8, 2, 2, '#8a4a2c');
       G.rect(X(199), gy - 12, 10, 1, '#d0d0d8');
       // 冰箱
-      G.rect(X(217), gy - 35, 14, 35, '#1b1433');
-      G.rect(X(218), gy - 34, 12, 34, '#e8eef4');
-      G.rect(X(218), gy - 22, 12, 1, '#b8c4d0');
-      G.rect(X(228), gy - 31, 1, 6, '#b8c4d0');
-      G.rect(X(228), gy - 19, 1, 8, '#b8c4d0');
-      G.rect(X(220), gy - 31, 6, 5, '#ffffff');
-      G.rect(X(220), gy - 31, 6, 1, '#e23b4b');
-      G.rect(X(222), gy - 29, 2, 2, '#ff7aa2');
-      for (const [x, y, c] of [[221, gy - 18, '#5bc0eb'], [224, gy - 15, '#ffd23f'], [221, gy - 12, '#7bd389']]) G.rect(X(x), y, 2, 2, c);
-      // 小餐桌 + 两杯热可可（冒热气）
-      G.rect(X(232), gy - 12, 16, 2, '#a06a46');
-      G.rect(X(233), gy - 10, 1, 10, '#8a5a3c');
-      G.rect(X(246), gy - 10, 1, 10, '#8a5a3c');
-      for (const [x, c] of [[235, '#e23b4b'], [242, '#2f8a55']]) {
+      G.rect(X(222), gy - 35, 14, 35, '#1b1433');
+      G.rect(X(223), gy - 34, 12, 34, '#e8eef4');
+      G.rect(X(223), gy - 22, 12, 1, '#b8c4d0');
+      G.rect(X(233), gy - 31, 1, 6, '#b8c4d0');
+      G.rect(X(233), gy - 19, 1, 8, '#b8c4d0');
+      G.rect(X(225), gy - 31, 6, 5, '#ffffff');
+      G.rect(X(225), gy - 31, 6, 1, '#e23b4b');
+      G.rect(X(227), gy - 29, 2, 2, '#ff7aa2');
+      for (const [x, y, c] of [[226, gy - 18, '#5bc0eb'], [229, gy - 15, '#ffd23f'], [226, gy - 12, '#7bd389']]) G.rect(X(x), y, 2, 2, c);
+      // 餐桌 + 两把椅子 + 两杯热可可（冒热气）
+      for (const [sx, back] of [[240, 240], [264, 268]]) {
+        G.rect(X(back), gy - 18, 1, 11, '#a06a46');
+        G.rect(X(sx), gy - 9, 5, 2, '#c08a5a');
+        G.rect(X(sx), gy - 7, 1, 7, '#8a5a3c');
+        G.rect(X(sx + 4), gy - 7, 1, 7, '#8a5a3c');
+      }
+      G.rect(X(246), gy - 12, 18, 2, '#a06a46');
+      G.rect(X(246), gy - 12, 18, 1, '#c08a5a');
+      G.rect(X(247), gy - 10, 1, 10, '#8a5a3c');
+      G.rect(X(262), gy - 10, 1, 10, '#8a5a3c');
+      for (const [x, c] of [[249, '#e23b4b'], [257, '#2f8a55']]) {
         G.rect(X(x), gy - 16, 4, 4, c);
         G.rect(X(x + 4), gy - 15, 1, 2, c);
         G.rect(X(x), gy - 16, 4, 1, '#8a4a2c');
         for (let k = 0; k < 2; k++) {
           const p = (G.t * 0.8 + k * 0.5 + x * 0.1) % 1;
-          G.rect(X(x + 1 + Math.round(Math.sin(p * 6) )), gy - 18 - Math.round(p * 6), 1, 1, '#ffffff');
+          G.rect(X(x + 1 + Math.round(Math.sin(p * 6))), gy - 18 - Math.round(p * 6), 1, 1, '#ffffff');
         }
       }
 
-      // ===== 卧室 =====
-      drawWindow(X(256), gy - 53, 20, 20, true);
+      // ===== 卧室（270~374） =====
+      drawWindow(X(276), gy - 53, 20, 20, true);
       if (S.t - S.shoot < 0.8) {
         const p = (S.t - S.shoot) / 0.8;
-        G.rect(X(258 + Math.round(p * 14)), gy - 50 + Math.round(p * 8), 2, 1, '#ffffff');
+        G.rect(X(278 + Math.round(p * 14)), gy - 50 + Math.round(p * 8), 2, 1, '#ffffff');
       }
-      G.rect(X(250), ceil + 4, 70, 1, '#c8a0a0');
+      G.rect(X(272), ceil + 4, 100, 1, '#c8a0a0');
       FAIRY.forEach((x, i) => G.rect(X(x), ceil + 5 + (i % 2), 1, 1, (i + Math.floor(G.t * 2)) % 3 ? '#ffd23f' : '#fff6d0'));
       // 矮柜 + 唱片机（放歌时唱片转、冒音符）
-      G.rect(X(251), gy - 12, 15, 12, '#a06a46');
-      G.rect(X(251), gy - 12, 15, 1, '#c08a5a');
-      G.rect(X(253), gy - 7, 11, 1, '#8a5a3c');
-      G.rect(X(252), gy - 17, 13, 5, '#3a2a2a');
-      G.rect(X(253), gy - 18, 8, 1, '#1b1433');
-      G.rect(X(256 + (A.bgmOn ? Math.floor(G.t * 8) % 3 : 0)), gy - 18, 1, 1, '#e23b4b');
-      G.rect(X(262), gy - 19, 1, 2, '#d0d0d8');
+      G.rect(X(273), gy - 12, 15, 12, '#a06a46');
+      G.rect(X(273), gy - 12, 15, 1, '#c08a5a');
+      G.rect(X(275), gy - 7, 11, 1, '#8a5a3c');
+      G.rect(X(274), gy - 17, 13, 5, '#3a2a2a');
+      G.rect(X(275), gy - 18, 8, 1, '#1b1433');
+      G.rect(X(278 + (A.bgmOn ? Math.floor(G.t * 8) % 3 : 0)), gy - 18, 1, 1, '#e23b4b');
+      G.rect(X(284), gy - 19, 1, 2, '#d0d0d8');
+      // 电视柜 + 电视（屏幕里一直在掉小方块）+ 游戏机 + 手柄
+      G.rect(X(294), gy - 9, 22, 9, '#a06a46');
+      G.rect(X(294), gy - 9, 22, 1, '#c08a5a');
+      G.rect(X(305), gy - 7, 1, 7, '#8a5a3c');
+      G.rect(X(300), gy - 10, 10, 1, '#3a2a2a');
+      G.rect(X(295), gy - 27, 20, 17, '#1b1433');
+      G.rect(X(296), gy - 26, 18, 14, '#141432');
+      const tvc = ['#e23b4b', '#ffd23f', '#2f9e5e', '#5bc0eb', '#b388ff'];
+      for (let i = 0; i < 9; i++) G.rect(X(296 + i * 2), gy - 14, 2, 2, tvc[i % 5]);
+      for (let i = 0; i < 5; i++) G.rect(X(298 + i * 2), gy - 16, 2, 2, tvc[(i + 2) % 5]);
+      const fy = Math.floor(G.t * 4) % 6, fc = tvc[Math.floor(G.t * 4 / 6) % 5];
+      G.rect(X(304), gy - 26 + fy * 2, 4, 2, fc);
+      G.rect(X(306), gy - 24 + fy * 2, 2, 2, fc);
+      G.rect(X(296), gy - 26, 18, 1, '#2a2a5a');
+      G.rect(X(297), gy - 6, 6, 3, '#e8e8f0');
+      G.rect(X(298), gy - 5, 1, 1, '#e23b4b');
+      G.rect(X(301), gy - 5, 1, 1, '#5bc0eb');
+      G.rect(X(308), gy - 4, 5, 2, '#5a5a6a');
+      G.rect(X(303), gy - 5, 5, 1, '#3a3a4a');
       // 床（两个枕头）
-      G.rect(X(301), gy - 20, 4, 20, '#a06a46');
-      G.rect(X(268), gy - 20, 3, 20, '#a06a46');
-      G.rect(X(270), gy - 11, 32, 6, '#f3e6c8');
-      G.rect(X(270), gy - 13, 22, 8, '#e88aa0');
-      for (let x = 271; x < 292; x += 4) G.rect(X(x), gy - 12, 2, 1, '#ffffff');
-      G.rect(X(291), gy - 14, 9, 3, '#ffffff');
-      G.rect(X(292), gy - 16, 8, 2, '#f3e6c8');
-      G.rect(X(270), gy - 5, 32, 2, '#a06a46');
+      G.rect(X(355), gy - 20, 4, 20, '#a06a46');
+      G.rect(X(322), gy - 20, 3, 20, '#a06a46');
+      G.rect(X(324), gy - 11, 32, 6, '#f3e6c8');
+      G.rect(X(324), gy - 13, 22, 8, '#e88aa0');
+      for (let x = 325; x < 346; x += 4) G.rect(X(x), gy - 12, 2, 1, '#ffffff');
+      G.rect(X(345), gy - 14, 9, 3, '#ffffff');
+      G.rect(X(346), gy - 16, 8, 2, '#f3e6c8');
+      G.rect(X(324), gy - 5, 32, 2, '#a06a46');
       // 床头柜 + 台灯
-      G.rect(X(306), gy - 10, 12, 10, '#a06a46');
-      G.rect(X(306), gy - 10, 12, 1, '#c08a5a');
-      G.rect(X(311), gy - 18, 2, 8, '#6e4630');
-      G.rect(X(307), gy - 26, 10, 8, S.lampOff ? '#c8b48a' : '#ffd27a');
-      G.rect(X(307), gy - 26, 10, 1, S.lampOff ? '#a8946a' : '#fff6d0');
+      G.rect(X(360), gy - 10, 12, 10, '#a06a46');
+      G.rect(X(360), gy - 10, 12, 1, '#c08a5a');
+      G.rect(X(365), gy - 18, 2, 8, '#6e4630');
+      G.rect(X(361), gy - 26, 10, 8, S.lampOff ? '#c8b48a' : '#ffd27a');
+      G.rect(X(361), gy - 26, 10, 1, S.lampOff ? '#a8946a' : '#fff6d0');
     }
 
     // ---------- 角色、气泡、按钮、对话框（原分辨率） ----------
@@ -540,7 +586,7 @@
 
     later(0.6, () => dialog(TEXT.welcome));
 
-    return {
+    const scene = {
       update(dt) {
         S.t += dt;
         const { gy } = dims(), b = S.boy;
@@ -584,7 +630,7 @@
         for (const k in S.bubbles) if ((S.bubbles[k].life -= dt) <= 0) delete S.bubbles[k];
         if (S.dialog) S.dialog.age += dt;
         if (A.bgmOn && Math.random() < dt * 1.5) {
-          part({ spr: G.SPR.noteS, x: 258 + G.rand(-3, 3), y: gy - 20, vy: -14, vx: G.rand(-4, 4), life: 1.4 });
+          part({ spr: G.SPR.noteS, x: 280 + G.rand(-3, 3), y: gy - 20, vy: -14, vx: G.rand(-4, 4), life: 1.4 });
         }
       },
 
@@ -624,7 +670,7 @@
 
         // 关灯后的卧室：变暗，只剩小星星灯亮着
         if (S.lampOff) {
-          const x0 = (250 - cam) * 2, x1 = (WORLD - cam) * 2;
+          const x0 = (270 - cam) * 2, x1 = (WORLD - cam) * 2;
           if (x1 > 0 && x0 < G.W) {
             ctx.fillStyle = 'rgba(20,16,50,0.6)';
             ctx.fillRect(Math.max(0, x0), 0, Math.min(G.W, x1) - Math.max(0, x0), G.H);
@@ -691,5 +737,6 @@
 
       _state: S,   // 调试用
     };
+    return scene;
   };
 })();
