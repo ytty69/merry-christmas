@@ -269,42 +269,124 @@
     }
 
     // 窗户玻璃区域（世界坐标，相对房子），他会出现在这里
-    const WIN = { x: 7, y: -25, w: 18, h: 14 };
+    const WIN = { x: 8, y: -24, w: 18, h: 13 };
+    const BULBS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#7bd389'];
     function drawHouse(cam, gy, doorOpen) {
-      const x = HOUSE_X - cam;
-      G.rect(x + 40, gy - 50, 6, 14, '#6b5f8a');
-      G.rect(x + 39, gy - 51, 8, 2, '#ffffff');
+      const x = HOUSE_X - cam, blink = Math.floor(G.t * 3);
+
+      // 窗户和门透出的暖光洒在雪地上
+      for (const [lx, lw] of [[WIN.x - 2, WIN.w + 4], [35, 17]]) {
+        for (let j = 1; j < 7; j++) {
+          for (let i = 0; i < lw; i++) if ((i + j) % 2 === 0 && (j < 4 || (i + j) % 4 === 0)) G.rect(x + lx + i, gy + j, 1, 1, '#f7f0d8');
+        }
+      }
+
+      // 砖砌烟囱 + 炊烟
+      const cx = x + 40;
+      G.rect(cx, gy - 50, 7, 16, '#8a4a3a');
+      for (let r = 0; r < 5; r++) {
+        const yy = gy - 48 + r * 3;
+        G.rect(cx, yy, 7, 1, '#6a3628');
+        G.rect(cx + (r % 2 ? 2 : 5), yy - 2, 1, 2, '#6a3628');
+      }
+      G.rect(cx - 1, gy - 52, 9, 3, '#ffffff');
+      G.rect(cx + 1, gy - 49, 2, 1, '#ffffff');
       for (let k = 0; k < 4; k++) {
         const p = (G.t * 0.4 + k / 4) % 1;
         if (p > 0.85 && Math.floor(G.t * 20) % 2) continue;
-        G.rect(x + 42 + Math.round(Math.sin(p * 6 + k) * 3), gy - 53 - Math.round(p * 20), p > 0.5 ? 3 : 2, 2, '#9aa5b8');
+        G.rect(cx + 2 + Math.round(Math.sin(p * 6 + k) * 3), gy - 55 - Math.round(p * 20), p > 0.5 ? 3 : 2, 2, '#9aa5b8');
       }
-      G.rect(x + 2, gy - 30, 56, 30, '#8a5a3c');
-      for (let y = gy - 26; y < gy; y += 4) G.rect(x + 2, y, 56, 1, '#6f4630');
+
+      // 原木墙 + 石头地基
+      const wx = x + 2, ww = 56;
+      for (let y = gy - 30; y < gy - 3; y += 3) {
+        G.rect(wx, y, ww, 3, '#8a5a3c');
+        G.rect(wx, y, ww, 1, '#a8714a');
+        G.rect(wx, y + 2, ww, 1, '#6f4630');
+        for (const ex of [wx - 1, wx + ww - 1]) { G.rect(ex, y, 2, 3, '#c8a070'); G.rect(ex, y + 1, 2, 1, '#a07850'); }
+      }
+      G.rect(wx - 1, gy - 3, ww + 2, 3, '#6b5f8a');
+      G.rect(wx - 1, gy - 3, ww + 2, 1, '#8a80a8');
+      for (let i = 0; i < ww + 2; i += 5) G.rect(wx - 1 + i, gy - 2, 1, 2, '#4f4570');
+
+      // 瓦片屋顶 + 积雪
       for (let i = 0; i < 20; i++) {
         const w = 64 - i * 3, rx = x - 2 + i * 1.5, ry = gy - 31 - i;
-        G.rect(rx, ry, w, 1, i >= 16 ? '#ffffff' : '#7a2e3a');
-        G.rect(rx, ry, 2, 1, '#ffffff');
-        G.rect(rx + w - 2, ry, 2, 1, '#ffffff');
+        G.rect(rx, ry, w, 1, i % 2 ? '#7a2e3a' : '#8e2f3e');
+        for (let k = (i % 2) * 2; k < w; k += 4) G.rect(rx + k, ry, 1, 1, '#5e2230');
+        if (i >= 13) G.rect(rx, ry, w, 1, i === 13 ? '#e6eefc' : '#ffffff');
+        else { const s = 2 + ((i * 7) % 3); G.rect(rx, ry, s, 1, '#ffffff'); G.rect(rx + w - s, ry, s, 1, '#ffffff'); }
       }
-      G.rect(x + WIN.x - 1, gy + WIN.y - 1, WIN.w + 2, WIN.h + 2, '#5a3d2b');
-      G.rect(x + WIN.x, gy + WIN.y, WIN.w, WIN.h, '#ffd23f');
-      G.rect(x + WIN.x - 2, gy + WIN.y + WIN.h + 1, WIN.w + 4, 1, '#ffffff');
-      G.rect(x + 36, gy - 25, 15, 25, '#3b2a1e');
+      G.rect(x - 3, gy - 31, 66, 2, '#ffffff');
+      G.rect(x - 3, gy - 29, 66, 1, '#c4d4f0');
+      for (const ix of [1, 4, 58, 61]) G.rect(x + ix, gy - 28, 1, 1 + (ix % 3), '#dff4ff');
+
+      // 屋檐下的彩灯串
+      for (let i = 0, k = 0; i < 56; i += 4, k++) {
+        const ly = gy - 27 + (k % 2);
+        G.rect(x + 4 + i, ly - 1, 4, 1, '#2b1d1a');
+        G.rect(x + 5 + i, ly, 1, 2, (k + blink) % 4 ? BULBS[k % 4] : '#4a3a3a');
+      }
+
+      // 窗户：百叶窗、奶油色窗框、暖光玻璃、积雪花箱
+      const wnx = x + WIN.x, wny = gy + WIN.y;
+      for (const sx of [wnx - 5, wnx + WIN.w + 1]) {
+        G.rect(sx, wny - 1, 4, WIN.h + 2, '#2f6e4a');
+        for (let j = 1; j < WIN.h; j += 2) G.rect(sx + 1, wny + j, 2, 1, '#245a3c');
+      }
+      G.rect(wnx - 1, wny - 1, WIN.w + 2, WIN.h + 2, '#f3e6c8');
+      G.rect(wnx, wny, WIN.w, WIN.h, '#ffcf5a');
+      G.rect(wnx, wny, WIN.w, 3, '#ffe58a');
+      G.rect(wnx - 2, wny + WIN.h + 1, WIN.w + 4, 3, '#6f4630');
+      G.rect(wnx - 2, wny + WIN.h + 1, WIN.w + 4, 1, '#ffffff');
+      for (const bx of [2, 7, 13, 18]) G.rect(wnx + bx, wny + WIN.h + 2, 1, 1, '#e23b4b');
+
+      // 门：门框、木板门、小窗、花环、石阶、壁灯
+      const dx = x + 37, dt = gy - 25;
+      G.rect(dx - 2, dt - 2, 17, 24, '#f3e6c8');
       if (doorOpen) {
-        G.rect(x + 37, gy - 24, 13, 24, '#ffb347');
+        G.rect(dx, dt, 13, 22, '#ffb347');
+        G.rect(dx, dt, 13, 3, '#ffd27a');
       } else {
-        G.rect(x + 37, gy - 24, 13, 24, '#5a3d2b');
-        G.rect(x + 39, gy - 22, 9, 8, '#4a3122');
-        G.rect(x + 39, gy - 11, 9, 8, '#4a3122');
-        G.rect(x + 47, gy - 12, 1, 2, '#ffd23f');
-        G.circle(x + 43.5, gy - 18, 4, '#2f9e5e');
-        G.rect(x + 42, gy - 19, 3, 2, '#5a3d2b');
-        G.rect(x + 42, gy - 15, 3, 1, '#e23b4b');
+        G.rect(dx, dt, 13, 22, '#7a4a2c');
+        for (let i = 3; i < 13; i += 3) G.rect(dx + i, dt, 1, 22, '#5e3820');
+        G.rect(dx + 4, dt + 2, 5, 3, '#ffd23f');
+        G.rect(dx + 10, dt + 13, 2, 2, '#ffd23f');
+        G.circle(dx + 6.5, dt + 11, 4, '#2f9e5e');
+        G.circle(dx + 6.5, dt + 11, 2, '#7a4a2c');
+        G.rect(dx + 4, dt + 9, 1, 1, '#e23b4b');
+        G.rect(dx + 9, dt + 12, 1, 1, '#e23b4b');
+        G.rect(dx + 5, dt + 14, 3, 2, '#e23b4b');
       }
+      G.rect(dx - 3, gy - 3, 19, 3, '#9a90b8');
+      G.rect(dx - 3, gy - 3, 19, 1, '#ffffff');
+      G.rect(x + 52, gy - 21, 4, 1, '#2b2b3a');
+      G.rect(x + 53, gy - 20, 3, 4, '#2b2b3a');
+      G.rect(x + 54, gy - 19, 1, 2, Math.floor(G.t * 6) % 3 ? '#ffd23f' : '#ffb347');
+
+      // 墙根的雪堆
+      for (let i = 0; i < 56; i += 6) if (i < 32 || i > 50) G.rect(x + 1 + i, gy - 2, 5, 2, '#ffffff');
+
+      // 雪人
+      const sm = x + 70;
+      G.circle(sm, gy - 4, 4, '#ffffff');
+      G.circle(sm, gy - 11, 3, '#ffffff');
+      G.rect(sm + 2, gy - 6, 1, 4, '#c4d4f0');
+      G.rect(sm - 1, gy - 12, 1, 1, '#1b1433');
+      G.rect(sm + 1, gy - 12, 1, 1, '#1b1433');
+      G.rect(sm, gy - 11, 2, 1, '#ff9f1c');
+      G.rect(sm - 3, gy - 8, 6, 1, '#e23b4b');
+      G.rect(sm + 1, gy - 7, 1, 2, '#e23b4b');
+      G.rect(sm, gy - 5, 1, 1, '#1b1433');
+      G.rect(sm, gy - 3, 1, 1, '#1b1433');
+      G.rect(sm - 7, gy - 9, 4, 1, '#5a3d2b');
+      G.rect(sm + 4, gy - 10, 4, 1, '#5a3d2b');
+      G.rect(sm - 3, gy - 14, 7, 1, '#1b1433');
+      G.rect(sm - 2, gy - 17, 5, 3, '#1b1433');
+      G.rect(sm - 2, gy - 15, 5, 1, '#e23b4b');
     }
 
-    // 窗户里的他（原分辨率），窗格画在他前面
+    // 窗户里的他（原分辨率），窗帘和窗格画在他前面
     function drawBoyInWindow(cam, gy) {
       const x0 = (HOUSE_X + WIN.x - cam) * 2, y0 = (gy + WIN.y) * 2, w = WIN.w * 2, h = WIN.h * 2;
       if (x0 + w < 0) return;
@@ -313,10 +395,14 @@
       c.beginPath();
       c.rect(x0, y0, w, h);
       c.clip();
-      G.draw(P.boy, x0 + w / 2 - 16, y0 + 1 + (Math.floor(G.t * 1.5) % 2), 1);
+      // 往上提一点，让脸露在窗户正中
+      G.draw(P.boy, x0 + w / 2 - 16, y0 - 7 + (Math.floor(G.t * 1.5) % 2), 1);
       c.restore();
-      G.rect(x0 + w / 2 - 2, y0, 4, h, '#5a3d2b');
-      G.rect(x0, y0 + 10, w, 2, '#5a3d2b');
+      for (const cx of [x0, x0 + w - 4]) {
+        G.rect(cx, y0, 4, h, '#c22f40');
+        G.rect(cx + (cx === x0 ? 3 : 0), y0, 1, h, '#e23b4b');
+        G.rect(cx, y0 + 14, 4, 2, '#ffd23f');
+      }
     }
 
     function drawOutside(t, d) {
