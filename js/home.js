@@ -17,6 +17,9 @@
     // 靠近她时，她随机说的话
     girl: ['今天也超级喜欢你', '老公圣诞快乐！', '手好冰，给你暖暖', '明年圣诞也要一起过哦', '嘿嘿，被你发现啦'],
     hug: '抱抱~',
+    // 第一次槲寄生垂下来时的说明；之后再遇到只说短的那句
+    mistletoe: '槲寄生垂下来啦！\n西方圣诞节有个传统：\n站在槲寄生下的两个人\n要亲一下哦~',
+    mistletoeShort: '槲寄生下要亲亲哦~',
     items: {
       door: '外面在下雪呢\n今天哪儿也不去，就在家陪你~',
       rack: '你的围巾我挂好啦\n出门记得戴上，别着凉',
@@ -52,10 +55,10 @@
     const A = G.audio, ART = G.ART, P = ART.sprites();
     const S = {
       t: 0, parts: [], floats: [], hops: {}, bubbles: {}, timers: [], queue: [],
-      boy: { x: 100, flip: false, target: null, pending: null, walking: false, stepT: 0 },
+      boy: { x: 24, flip: false, target: null, pending: null, walking: false, stepT: 0 },
       hold: {}, dialog: null, found: new Set(), gifts: TEXT.gifts.length,
       near: false, lastInter: '', lock: 0, lampOff: false,
-      mistle: -99, fire: -99, oven: -99, shoot: -99, allShown: false,
+      mistle: -99, kiss: -99, kissExplained: false, fire: -99, oven: -99, shoot: -99, allShown: false,
     };
     let wb = null;
     const dims = () => { const H2 = Math.ceil(G.H / 2); return { W2: G.W / 2, H2, gy: Math.round(H2 * 0.72) }; };
@@ -128,12 +131,17 @@
         say('girl', TEXT.hug);
         later(0.3, () => hearts((b.x + GIRL_X) / 2, gy - 24, 8));
       } else if (type === 'kiss') {
-        b.x = GIRL_X - 12; b.flip = false; S.lock = 2;
-        S.mistle = S.t;
-        later(0.7, () => {
+        // 槲寄生垂下 → 两人靠近、身体倾斜贴在一起 → 「啾~」冒爱心 → 分开
+        b.x = GIRL_X - 13; b.flip = false; S.lock = 2.6;
+        S.mistle = S.t; S.kiss = S.t;
+        later(0.3, () => {
+          if (!S.kissExplained) { S.kissExplained = true; dialog(TEXT.mistletoe); }
+          else say('girl', TEXT.mistletoeShort, 1.4);
+        });
+        later(0.9, () => {
           A.play('ding', 10);
-          float('啾~', (b.x + GIRL_X) / 2, gy - 30, '#ff4d6d');
-          hearts((b.x + GIRL_X) / 2, gy - 24, 10);
+          float('啾~', (b.x + GIRL_X) / 2, gy - 32, '#ff4d6d');
+          hearts((b.x + GIRL_X) / 2, gy - 26, 12);
         });
       } else {
         S.lock = 1.6;
@@ -311,18 +319,38 @@
         if (x % 2) G.rect(X(x), y, 1, 1, '#4fae6c');
         if (x % 5 === 2) G.rect(X(x), y + 3, 1, 1, (x + Math.floor(G.t * 2)) % 3 ? (x % 2 ? '#ffd23f' : '#fff6d0') : '#7a4e34');
       }
-      // 沙发 + 格子毯
-      G.rect(X(74), gy - 13, 4, 10, '#8e2232');
-      G.rect(X(106), gy - 13, 4, 10, '#8e2232');
-      G.rect(X(76), gy - 18, 32, 9, '#c22f40');
-      G.rect(X(76), gy - 18, 32, 1, '#e05566');
-      G.rect(X(76), gy - 9, 32, 6, '#a8283a');
-      G.rect(X(91), gy - 18, 1, 9, '#a8283a');
-      G.rect(X(95), gy - 16, 10, 11, '#2f8a55');
-      for (let i = 0; i < 10; i += 3) G.rect(X(95 + i), gy - 16, 1, 11, '#ffd23f');
-      G.rect(X(95), gy - 12, 10, 1, '#1f6a43');
-      G.rect(X(77), gy - 3, 2, 3, '#5a3d2b');
-      G.rect(X(105), gy - 3, 2, 3, '#5a3d2b');
+      // 沙发：深色描边、靠背、两块坐垫、扶手、抱枕；右扶手上搭着一条格子毯
+      const SO = '#4a1420';
+      const sofa = [
+        [77, gy - 19, 30, 10, '#c22f40'],
+        [74, gy - 14, 6, 11, '#a8283a'],
+        [104, gy - 14, 6, 11, '#a8283a'],
+        [79, gy - 10, 26, 5, '#d23a4c'],
+        [79, gy - 5, 26, 3, '#8e2232'],
+      ];
+      sofa.forEach(([x, y, w, h]) => G.rect(X(x) - 1, y - 1, w + 2, h + 2, SO));
+      sofa.forEach(([x, y, w, h, c]) => G.rect(X(x), y, w, h, c));
+      G.rect(X(78), gy - 18, 28, 1, '#e05566');
+      G.rect(X(92), gy - 18, 1, 8, '#a8283a');
+      G.rect(X(92), gy - 10, 1, 5, '#a8283a');
+      G.rect(X(80), gy - 10, 24, 1, '#e86070');
+      G.rect(X(75), gy - 14, 4, 1, '#c84050');
+      G.rect(X(105), gy - 14, 4, 1, '#c84050');
+      G.rect(X(76), gy - 2, 2, 2, '#5a3d2b');
+      G.rect(X(106), gy - 2, 2, 2, '#5a3d2b');
+      G.rect(X(81), gy - 16, 7, 6, SO);
+      G.rect(X(82), gy - 15, 5, 4, '#f3e6c8');
+      G.rect(X(91), gy - 16, 7, 6, SO);
+      G.rect(X(92), gy - 15, 5, 4, '#2f8a55');
+      G.rect(X(93), gy - 14, 1, 1, '#ff4d6d');
+      G.rect(X(95), gy - 14, 1, 1, '#ff4d6d');
+      G.rect(X(94), gy - 13, 1, 1, '#ff4d6d');
+      G.rect(X(101), gy - 16, 9, 14, SO);
+      G.rect(X(102), gy - 15, 7, 12, '#f3e6c8');
+      for (let i = 0; i < 7; i += 3) G.rect(X(102 + i), gy - 15, 1, 12, '#c22f40');
+      for (let j = 1; j < 12; j += 3) G.rect(X(102), gy - 15 + j, 7, 1, '#2f8a55');
+      G.rect(X(102), gy - 15, 7, 1, '#ffffff');
+      for (let x = 102; x < 109; x += 2) G.rect(X(x), gy - 2, 1, 1, '#c22f40');
       // 圆地毯
       for (let dy = -3; dy <= 3; dy++) {
         const hw = Math.round(30 * Math.sqrt(1 - (dy / 3.6) ** 2)), y = gy + 4 + dy;
@@ -449,10 +477,18 @@
     }
 
     // ---------- 角色、气泡、按钮、对话框（原分辨率） ----------
-    function drawAvatar(img, sx, ground, flip, dy, walk) {
+    // ang：以脚底为支点的倾斜角度（亲亲时两人往中间靠）
+    function drawAvatar(img, sx, ground, flip, dy, walk, ang = 0) {
       if (!img.complete || !img.naturalWidth) return;
       const bob = walk ? -(Math.floor(S.t * 4) % 2) : 0;
-      G.draw(img, Math.round(sx) - 16, ground - 40 + bob + dy, 1, flip);
+      if (!ang) { G.draw(img, Math.round(sx) - 16, ground - 40 + bob + dy, 1, flip); return; }
+      const c = G.ctx;
+      c.save();
+      c.translate(Math.round(sx), ground + dy);
+      c.rotate(ang);
+      if (flip) c.scale(-1, 1);
+      c.drawImage(img, -16, -40);
+      c.restore();
     }
 
     function drawBubble(text, sx, headY) {
@@ -561,8 +597,8 @@
         drawWorld(cam, d);
         // 亲亲时从天花板垂下来的槲寄生
         const mt = S.t - S.mistle;
-        if (mt < 2.2) {
-          const mx = Math.round((b.x + GIRL_X) / 2) - cam, k = Math.min(1, mt / 0.5, (2.2 - mt) / 0.4);
+        if (mt < 2.6) {
+          const mx = Math.round((b.x + GIRL_X) / 2) - cam, k = Math.min(1, mt / 0.5, (2.6 - mt) / 0.4);
           const ceil = ceilOf(gy), my = ceil + Math.round((gy - 28 - ceil) * k);
           G.rect(mx, ceil, 1, my - ceil, '#d8b04a');
           G.rect(mx - 2, my - 2, 2, 2, '#e23b4b');
@@ -581,8 +617,10 @@
         ctx.drawImage(wb, 0, 0, d.W2 * 2, d.H2 * 2);
 
         const feet = (gy + FEET) * 2, bx = Math.round(b.x);
-        drawAvatar(P.girl, (GIRL_X - cam) * 2, feet, b.x > GIRL_X, hopY('girl'), false);
-        drawAvatar(P.boy, (bx - cam) * 2, feet, b.flip, hopY('boy'), b.walking);
+        const kt = S.t - S.kiss;
+        const lean = kt < 0.5 ? 0 : kt < 0.8 ? (kt - 0.5) / 0.3 : kt < 1.9 ? 1 : kt < 2.2 ? (2.2 - kt) / 0.3 : 0;
+        drawAvatar(P.girl, (GIRL_X - cam) * 2 - Math.round(lean * 4), feet, b.x > GIRL_X, hopY('girl') - Math.round(lean * 2), false, -0.12 * lean);
+        drawAvatar(P.boy, (bx - cam) * 2 + Math.round(lean * 4), feet, b.flip, hopY('boy'), b.walking, 0.12 * lean);
 
         // 关灯后的卧室：变暗，只剩小星星灯亮着
         if (S.lampOff) {
