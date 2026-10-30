@@ -101,6 +101,16 @@
     },
     crunch() { noise({ dur: 0.06, f: 1400, vol: 0.12 }); },
     step() { noise({ dur: 0.04, f: 600, vol: 0.1 }); },
+    woof() {
+      tone({ f: 480, f2: 260, dur: 0.1, vol: 0.12 });
+      tone({ f: 520, f2: 280, dur: 0.1, at: 0.16, vol: 0.12 });
+    },
+    launch() { tone({ type: 'triangle', f: 400, f2: 1200, dur: 0.45, vol: 0.05 }); },
+    burst() {
+      noise({ dur: 0.5, f: 2500, f2: 200, vol: 0.35 });
+      tone({ type: 'sine', f: 90, f2: 40, dur: 0.3, vol: 0.3 });
+      for (let i = 0; i < 4; i++) noise({ at: 0.25 + i * 0.06, dur: 0.03, f: 6000, filter: 'highpass', vol: 0.08 });
+    },
     meow() {
       tone({ f: 700, f2: 520, dur: 0.18, vol: 0.07 });
       tone({ f: 540, f2: 780, dur: 0.22, at: 0.16, vol: 0.06 });

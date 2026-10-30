@@ -6,36 +6,35 @@
   // ================= 文字都在这里，改这里就行 =================
   const TEXT = {
     welcome: '欢迎回家~\n按左右箭头走走看，点点屋里的东西吧',
-    allFound: '全部都发现啦！\n圣诞快乐，小邹老公 ♥',
+    allFound: '全部都发现啦！\n圣诞快乐，老公 ♥',
     // 树下的礼物：按顺序一个一个拆开，最后一个放最想说的话
     gifts: [
       '礼物 1：\n（这里写一段想对他说的话）',
       '礼物 2：\n（这里写一段你们的回忆）',
       '礼物 3：\n（压轴的话放在最后一个）',
     ],
-    giftsDone: '礼物都拆完啦~\n最好的礼物是你 ♥',
+    giftsDone: '礼物都拆完啦~\n最好的礼物\n是我们在一起 ♥',
     // 靠近她时，她随机说的话
-    girl: ['今天也超级喜欢你', '老公圣诞快乐！', '手好冰，给你暖暖', '明年圣诞也要一起过哦', '嘿嘿，被你发现啦'],
+    girl: ['今天也超级喜欢你', '老公圣诞快乐！', '手好冰，给你暖暖', '明年圣诞也要一起过哦', '我爱你♥'],
     hug: '抱抱~',
     // 第一次槲寄生垂下来时的说明；之后再遇到只说短的那句
-    mistletoe: '槲寄生垂下来啦！\n西方圣诞节有个传统：\n站在槲寄生下的两个人\n要亲一下哦~',
+    mistletoe: '槲寄生垂下来啦！\n站在槲寄生下的两个人\n要亲吻哦~',
     mistletoeShort: '槲寄生下要亲亲哦~',
     items: {
-      door: '外面在下雪呢\n今天哪儿也不去，就在家陪你~',
+      door: '一起出门看烟花吧~',   // 点门：出门和雪人一起看烟花
       rack: '你的外套我挂好啦\n出门记得穿上，别着凉',
-      sofa: '沙发上还留着\n我们一起盖的小毯子',
-      cat: '喵~（它说它也想要圣诞礼物）',
-      tree: '我们一起装饰的圣诞树\n今年最好看的一棵！',
+      sofa: '一起窝在沙发里看电影吧',
+      dog: '汪汪~',
+      tree: '我们一起装饰的圣诞树\n是世界上最好看的一棵！',
       stocking: '袜子里塞了一张小纸条：\n「最喜欢你啦！」',
       fireplace: '暖暖的炉火\n和你在一起的冬天一点都不冷',
-      photo: '墙上挂着我们的小爱心\n每天看到都很开心',
       oven: '叮~ 姜饼人烤好啦\n等下一起吃~',
       fridge: '冰箱上贴满了\n我们一起去过的地方',
       cocoa: '两杯热可可\n一杯给你，一杯给我',
       window: '今晚的月亮好圆\n一起许个愿吧~',
-      recordOn: '放一首我们的歌~',
+      recordOn: '放一首圣诞歌~',
       recordOff: '安静一会儿\n听听雪的声音',
-      bed: '晚安\n明天也要一起醒来哦',
+      bed: '晚安\n要梦到我呀',
       lampOff: '关灯啦\n只留一串小星星灯~',
       lampOn: '开灯~',
     },
@@ -76,6 +75,19 @@
   const COAT_PAL = { k: '#101632', s: '#26325e', S: '#1e2850', h: '#4a5c9e', c: '#34447e', v: '#26325e', w: '#f3e6c8', y: '#ffd23f', t: '#1a2248', b: '#8a5a3c', m: '#c0c8d8' };
   let coatSpr = null;
   const COAT = () => coatSpr || (coatSpr = G.makeSprite(COAT_ROWS, COAT_PAL));
+  // 趴着的小狗：棕色身子、白色口鼻和爪子、深色耳朵
+  const DOG_ROWS = [
+    '..kk..........',
+    '.kddk.........',
+    'kbbbbk........',
+    'kbebbbkkkkkk..',
+    'nwwbbbbbbbbbk.',
+    '.kwwwbbbbbbbbk',
+    '..kwwkwwbbwwbk',
+    '...kk.kk..kk..',
+  ];
+  let dogSpr = null;
+  const DOG = () => dogSpr || (dogSpr = G.makeSprite(DOG_ROWS, { k: '#3a2414', b: '#b06a2a', d: '#7a4418', w: '#f3e6c8', e: '#1b1433', n: '#1b1433' }));
   const FAIRY = [276, 284, 292, 300, 308, 316, 324, 332, 340, 348, 356, 364];   // 卧室墙上小星星灯的 x
 
   G.Home = function () {
@@ -85,7 +97,7 @@
       boy: { x: 24, flip: false, target: null, pending: null, walking: false, stepT: 0 },
       hold: {}, dialog: null, found: new Set(), gifts: TEXT.gifts.length,
       near: false, lastInter: '', lock: 0, lampOff: false,
-      mistle: -99, kiss: -99, kissExplained: false, fire: -99, oven: -99, shoot: -99, allShown: false,
+      mistle: -99, wag: -99, kiss: -99, kissExplained: false, fire: -99, oven: -99, shoot: -99, allShown: false,
     };
     let wb = null;
     const dims = () => { const H2 = Math.ceil(G.H / 2); return { W2: G.W / 2, H2, gy: Math.round(H2 * 0.72) }; };
@@ -190,9 +202,15 @@
       const T = TEXT.items;
       itemGy = gy;
       itemCache = [
-        { id: 'door', r: [10, gy - 30, 24, 30], stand: 22, act() { dialog(T.door); A.play('blip'); sparkles(22, gy - 16, 8, 8); } },
+        {
+          id: 'door', r: [10, gy - 30, 24, 30], stand: 22, act() {
+            A.play('blip');
+            S.hold = {};
+            later(0.2, () => G.transition(() => G.Fireworks(scene, T.door)));
+          },
+        },
         { id: 'rack', r: [40, gy - 41, 17, 41], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
-        { id: 'cat', r: [92, gy, 14, 7], stand: 104, act() { dialog(T.cat); A.play('meow'); float('喵~', 99, gy - 4); hearts(99, gy, 3); } },
+        { id: 'dog', r: [91, gy - 2, 18, 11], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 99, gy - 6); hearts(99, gy - 2, 3); } },
         { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
         {
           id: 'gifts', r: [108, gy - 10, 28, 13], stand: 112, act() {
@@ -208,7 +226,6 @@
         },
         { id: 'tree', r: [106, gy - 72, 32, 62], stand: 112, act() { dialog(T.tree); A.play('sparkle'); sparkles(TREE_X, gy - 36, 20, 16); } },
         { id: 'girl', r: [GIRL_X - 8, gy - 21, 16, 24], stand: GIRL_X - 12, act() { S.near = true; girlInteract(); } },
-        { id: 'photo', r: [163, gy - 47, 14, 12], stand: 170, act() { dialog(T.photo); A.play('ding', 5); hearts(170, gy - 40, 4); } },
         { id: 'stocking', r: [159, gy - 21, 22, 11], stand: 170, act() { dialog(T.stocking); A.play('coin'); float('♥', 170, gy - 24, '#ff4d6d'); } },
         { id: 'fireplace', r: [156, gy - 23, 28, 23], stand: 170, act() { dialog(T.fireplace); S.fire = S.t; A.play('crunch'); later(0.15, () => A.play('crunch')); } },
         { id: 'oven', r: [195, gy - 15, 20, 15], stand: 205, act() { dialog(T.oven); S.oven = S.t; A.play('ding', 8); } },
@@ -408,9 +425,6 @@
       });
       // 壁炉（点击后火会旺一下）
       const fx = X(156), big = S.t - S.fire < 1.2 ? 3 : 0;
-      G.rect(fx + 8, gy - 47, 12, 10, '#ffd23f');
-      G.rect(fx + 9, gy - 46, 10, 8, '#fff6d0');
-      G.draw(G.SPR.heartS, fx + 11, gy - 45);
       G.rect(fx, gy - 20, 28, 20, '#8a80a8');
       for (let y = gy - 16; y < gy; y += 4) G.rect(fx, y, 28, 1, '#6b5f8a');
       G.rect(fx + 6, gy - 13, 16, 13, '#1b1433');
@@ -431,15 +445,12 @@
         G.rect(sx + 1, gy - 19, 4, 6, '#e23b4b');
         G.rect(sx + 1, gy - 14, 6, 2, '#e23b4b');
       }
-      // 地毯上睡觉的小猫
-      const cat = X(93), br = Math.floor(G.t * 1.2) % 2;
-      G.rect(cat, gy + 3, 10, 3, '#1b1433');
-      G.rect(cat + 1, gy + 2 - br, 8, 3, '#ff9f1c');
-      G.rect(cat + 1, gy + 4, 9, 1, '#e08e0b');
-      G.rect(cat + 1, gy + 1 - br, 1, 1, '#ff9f1c');
-      G.rect(cat + 3, gy + 1 - br, 1, 1, '#ff9f1c');
-      G.rect(cat + 2, gy + 3 - br, 1, 1, '#1b1433');
-      G.rect(cat + 6, gy + 3 - br, 3, 1, '#ffd27a');
+      // 地毯上趴着的小狗（尾巴一直轻轻摇，点它会摇得更快）
+      const dx = X(92), dy = gy - 2, wagFast = S.t - S.wag < 1.5;
+      G.draw(DOG(), dx, dy);
+      const up = Math.floor(G.t * (wagFast ? 12 : 3)) % 2;
+      G.rect(dx + 14, dy + (up ? 2 : 4), 1, 2, '#3a2414');
+      G.rect(dx + 15, dy + (up ? 1 : 4), 1, 2, '#b06a2a');
 
       // ===== 餐厅（190~270） =====
       G.rect(X(194), gy - 58, 44, 14, '#f3e6c8');

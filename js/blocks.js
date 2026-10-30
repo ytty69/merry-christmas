@@ -1,5 +1,5 @@
-/* 卧室游戏机里的小游戏「圣诞礼物方块」
-   落下的每一格都是一个礼物盒，拼满一整行就把这一行礼物送出去（消除 + 得分）
+/* 卧室游戏机里的小游戏「圣诞方块」
+   落下的每一格画成扎丝带的小盒子，拼满一整行就消除得分，并跳出「亲亲」
    底部按钮：◀ ▶ 移动 / ▼ 加速 / ⤓ 直接落下 / ⟳ 旋转；左上角「回家」回到屋里 */
 (function () {
   const COLS = 10, ROWS = 18, BEST_KEY = 'xmas.blocks.best';
@@ -23,7 +23,7 @@
     L: ['#ff9f1c', '#ffffff', '#ffc878'],
   };
   const LINE_SCORE = [0, 100, 300, 500, 800];
-  const CHEER = ['', '送出礼物!', '双份礼物!', '三份礼物!', '超级大礼包!!'];
+  const CHEER = ['', '一个亲亲', '双份亲亲!', '三份亲亲!', '超级亲亲!!'];
 
   const ICONS = {
     L: ['...w....', '..ww....', '.wwwwwww', 'wwwwwwww', '.wwwwwww', '..ww....', '...w....'],
@@ -213,7 +213,7 @@
         // 顶栏
         G.rect(0, 0, l.W, 17, '#1b1433');
         G.text('< 回家', 5, 6, { color: '#ffd23f' });
-        G.text('圣诞礼物方块', l.W - 6, 6, { color: '#ffffff', align: 'right' });
+        G.text('圣诞方块', l.W - 6, 6, { color: '#ffffff', align: 'right' });
 
         // 棋盘
         G.rect(l.bx - 2, l.by - 2, l.bw + 4, l.bh + 4, '#ffd23f');
