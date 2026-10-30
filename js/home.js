@@ -48,29 +48,37 @@
     { x0: 190, x1: 270, wall: '#dcefe4', pat: '#c6e2d2', kitchen: true }, // 餐厅
     { x0: 270, x1: 374, wall: '#f5dede', pat: '#ecc8c8' },              // 卧室
   ];
-  // 挂在木衣架上的外套：弯钩、衣架、斜肩、两只垂下的袖子，敞开的前襟露出奶白色毛衣
+  // 挂在衣架上的外套（按参考图还原）：歪着的弯钩、随意垂下来的外套、里面的红衬衫
   const COAT_ROWS = [
-    '........khhk.......',
-    '.........kkhk......',
-    '..........khk......',
-    '........kkhk.......',
-    '.....kkkbbbkkk.....',
-    '....kbbbbbbbbbk....',
-    '....kccvsssvcck....',
-    '...kcllvssSvccck...',
-    '..kcllcvssSvcccck..',
-    '.kccdccvssSvccdcck.',
-    'kclcdcccssScccdccck',
-    'kclckcccssSccckccck',
-    'kclckcccssSccckccck',
-    'kccckcdcssScdckccck',
-    'kccckcdcssScdckccck',
-    'kdddkcccssSccckdddk',
-    '.kkkkcccssSccckkkk.',
-    '....kdddssSdddk....',
-    '.....kkkkkkkkk.....',
+    '.........hhh..........',
+    '........h...h.........',
+    '............h.........',
+    '............h.........',
+    '...........h..........',
+    '.........hhh..........',
+    '......kkkSSSk.........',
+    '....kkckbhhhbkkk......',
+    '....kkckbkkhbkkdkk....',
+    '...kclckhkkkhbdlkk....',
+    '...kllcdkdddkkdllck...',
+    '..kclllkbkkkkdllllck..',
+    '..kllclckkkkdclllllk..',
+    '..kllclckkSkkclllllk..',
+    '..kllkllkSSkkllclllk..',
+    '.kclcdllkSSkcllklllck.',
+    '.kllkcllkSSklllkclllk.',
+    '.kllkcllkSSklllcklllk.',
+    '.kllkcllkSSklllcklllk.',
+    'kclckcllkSSklllckcllk.',
+    'kllckcclkSSklllckcllck',
+    '.kkkkcllkSSkllcccklllk',
+    '....klllkksklllcckllck',
+    '....klllkkbklllccklcck',
+    '....kclckkkklllllkkkk.',
+    '.....kkk...kclllck....',
+    '............kkkkk.....',
   ];
-  const COAT_PAL = { k: '#173322', h: '#7a4a2a', b: '#a0662f', c: '#3f8a5c', l: '#6cb886', d: '#2a6444', v: '#2a6444', s: '#f3e6c8', S: '#d8c8a8' };
+  const COAT_PAL = { k: '#173322', c: '#3f8a5c', l: '#5fae7a', d: '#2a6444', s: '#c2392b', S: '#962a20', b: '#a0662f', h: '#7a4a2a' };
   let coatSpr = null;
   const COAT = () => coatSpr || (coatSpr = G.makeSprite(COAT_ROWS, COAT_PAL));
   // 侧坐的小柴犬：竖耳朵、红项圈和小铃铛、奶白色胸口、大卷尾巴
@@ -216,7 +224,7 @@
             later(0.2, () => G.transition(() => G.Fireworks(scene, T.door)));
           },
         },
-        { id: 'rack', r: [39, gy - 41, 19, 41], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
+        { id: 'rack', r: [37, gy - 46, 22, 46], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
         { id: 'dog', r: [89, gy - 15, 19, 18], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 96, gy - 18); hearts(96, gy - 14, 3); } },
         { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
         {
@@ -359,13 +367,13 @@
       G.circle(X(22), gy - 19, 2, '#8a4a2c');
       G.rect(X(20), gy - 16, 4, 2, '#e23b4b');
       G.rect(X(12), gy, 20, 2, '#a8283a');
-      // 衣帽架：顶上挂圣诞帽，下面衣架上挂着大衣
-      G.rect(X(48), gy - 37, 2, 37, '#6e4630');
+      // 衣帽架：顶上挂圣诞帽，钩子上挂着外套
+      G.rect(X(48), gy - 41, 2, 41, '#6e4630');
       G.rect(X(44), gy - 2, 10, 2, '#6e4630');
-      G.rect(X(46), gy - 40, 6, 3, '#e23b4b');
-      G.rect(X(45), gy - 37, 8, 1, '#ffffff');
-      G.rect(X(52), gy - 41, 2, 2, '#ffffff');
-      G.draw(COAT(), X(39), gy - 35);
+      G.rect(X(46), gy - 45, 6, 3, '#e23b4b');
+      G.rect(X(45), gy - 42, 8, 1, '#ffffff');
+      G.rect(X(52), gy - 46, 2, 2, '#ffffff');
+      G.draw(COAT(), X(37), gy - 41);
       G.rect(X(56), gy - 2, 4, 2, '#5a3d2b');
       G.rect(X(61), gy - 2, 4, 2, '#5a3d2b');
 
