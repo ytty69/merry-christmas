@@ -709,10 +709,22 @@
       G.rect(x + 13, y, 4, 22, '#ffd23f');
       G.rect(x + 16, y, 1, 22, '#e08e0b');
       if (S.open) {
-        // 打开后从盒子里射出的光
-        for (let i = 0; i < 6; i++) {
-          if ((i + Math.floor(G.t * 12)) % 3) G.rect(x + 3 + i * 5, y - 40, 2, 40, '#fff6d0');
+        const k = Math.min(1, S.open / 0.4);   // 光在 0.4 秒内慢慢展开
+        // 盒口的光团：实色像素，中心奶白 → 金黄 → 橙金，最外圈做抖动过渡
+        for (const [r, col, dith] of [[16 * k, '#f5b64a', true], [11 * k, '#ffd36b', false], [6 * k, '#fff6d0', false]]) {
+          for (let dy = 0; dy <= r; dy++) {
+            const hw = Math.round(Math.sqrt(r * r - dy * dy) * 1.4);
+            if (!dith) G.rect(cx - hw, y - dy, hw * 2, 1, col);
+            else for (let i = -hw; i < hw; i++) if ((i + dy) % 2 === 0) G.rect(cx + i, y - dy, 1, 1, col);
+          }
         }
+        // 从盒口放射出去的光芒，轻轻摆动
+        const sway = Math.sin(G.t * 1.5) * 0.08;
+        for (let i = -3; i <= 3; i++) {
+          const a = i * 0.32 + sway, len = (i % 2 ? 36 : 50) * k;
+          for (let r = 4; r < len; r++) G.rect(cx + Math.sin(a) * r, y - Math.cos(a) * r, 1, 1, r > len - 8 ? '#ffe9a0' : '#fff6d0');
+        }
+        G.rect(x + 1, y - 1, 28, 2, '#fff6d0');
       }
       const ly = y - 6 + (S.open ? -Math.round(S.open * 120) : (wiggle ? -1 : 0)), lx = x + (S.open ? Math.round(S.open * 30) : 0);
       G.rect(lx - 3, ly - 1, 36, 8, '#1b1433');
@@ -750,6 +762,12 @@
         if (S.phase === 'gift') {
           S.gt += dt;
           if (S.open && (S.open += dt) > 1.3) { S.phase = 'story'; S.t = 0; S.parts = []; }
+          // 打开后不断有小星光从盒子里飘上来
+          if (S.open && S.open < 1 && (S.sparkT = (S.sparkT || 0) - dt) <= 0) {
+            S.sparkT = 0.04;
+            const { W2, gy } = dims();
+            part({ x: W2 / 2 + G.rand(-10, 10), y: gy - 20, vx: G.rand(-8, 8), vy: G.rand(-50, -25), life: 0.8, c: G.pick(['#ffd23f', '#fff6d0', '#ffffff']) });
+          }
           return;
         }
         S.t += dt;
