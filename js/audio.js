@@ -100,6 +100,11 @@
       for (let i = 0; i < 3; i++) tone({ f: mf(G.pick([72, 74, 76, 79, 81])), dur: 0.05, at: i * 0.07, vol: 0.09 });
     },
     crunch() { noise({ dur: 0.06, f: 1400, vol: 0.12 }); },
+    step() { noise({ dur: 0.04, f: 600, vol: 0.1 }); },
+    meow() {
+      tone({ f: 700, f2: 520, dur: 0.18, vol: 0.07 });
+      tone({ f: 540, f2: 780, dur: 0.22, at: 0.16, vol: 0.06 });
+    },
     chop() {
       noise({ dur: 0.09, f: 1800, f2: 300, vol: 0.5 });
       tone({ f: 150, f2: 70, dur: 0.1, vol: 0.18 });

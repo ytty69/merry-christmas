@@ -27,6 +27,7 @@
   const NIGHT = ['#0b0b1a', '#121436', '#1a1f4f', '#243066', '#2f4280'];
   const HANDLE = '#8a5a3c', METAL = '#9aa5b8';
   const ORN_COLORS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#ffffff', '#b388ff'];
+  const BULBS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#7bd389'];
 
   // ---------- 精灵 ----------
   // 两个角色是 32x41 的像素图（脚底在第 40 行），在原分辨率上 1:1 绘制
@@ -216,6 +217,62 @@
     G.ctx.restore();
   }
 
+  // 画装饰好的圣诞树（开场和「我们的家」共用）
+  // st: { orn 已挂装饰数, fresh(i) 是否刚挂上, tinsel 彩带铺开进度 0~1, lightsT 亮灯后秒数（-1 未亮）, star 是否有星星 }
+  function drawTree(tr, cx, baseY, st) {
+    const P = sprites(), tx = cx - tr.w / 2, ty = baseY + 1 - tr.h;
+    G.draw(tr.c, tx, ty);
+
+    // 金色彩带：亮灯时从左到右铺开，之后有一道亮光沿着彩带流动
+    if (st.lightsT >= 0) {
+      const shown = Math.floor(Math.min(1, st.tinsel) * tr.tinsel.length), run = Math.floor(G.t * 14);
+      tr.tinsel.slice(0, shown).forEach(([ox, oy]) => {
+        G.rect(tx + ox, ty + oy, 1, 1, (ox + run) % 9 === 0 ? '#fff6d0' : ox % 2 ? '#ffd23f' : '#e0a82e');
+      });
+    }
+
+    // 装饰球（大的 2x2 带高光）
+    for (let i = 0; i < Math.min(st.orn, tr.spots.length); i++) {
+      const [ox, oy] = tr.spots[i];
+      const c = st.fresh && st.fresh(i) ? '#ffffff' : ORN_COLORS[i % ORN_COLORS.length];
+      if (i % 3 === 2) { G.rect(tx + ox, ty + oy, 1, 1, c); continue; }
+      G.rect(tx + ox, ty + oy, 2, 2, c);
+      G.rect(tx + ox, ty + oy, 1, 1, '#ffffff');
+      G.rect(tx + ox + 1, ty + oy + 1, 1, 1, '#1b1433');
+    }
+
+    // 彩灯：逐个亮起，各自闪烁，亮的时候带一圈光晕
+    if (st.lightsT >= 0) {
+      tr.lights.forEach(([ox, oy], i) => {
+        if (st.lightsT < i * 0.015) return;
+        const on = Math.sin(G.t * 3 + i * 1.7) > -0.2, x = tx + ox, y = ty + oy;
+        if (on && i % 3 === 0) {
+          G.rect(x - 1, y, 3, 1, '#fff6d0');
+          G.rect(x, y - 1, 1, 3, '#fff6d0');
+        }
+        G.rect(x, y, 1, 1, on ? BULBS[i % 4] : '#2b4a3a');
+      });
+    }
+
+    // 树顶星星 + 伸缩的光芒 + 树周围一闪一闪的小星光
+    const starX = cx - 6, starY = ty - 10;
+    if (st.star) {
+      const pulse = Math.floor(G.t * 3) % 2, L = pulse ? 4 : 3;
+      G.rect(cx - 0.5, starY - L - 1, 1, L, '#f5a623');
+      G.rect(starX - L - 1, starY + 4, L, 1, '#f5a623');
+      G.rect(starX + 14, starY + 4, L, 1, '#f5a623');
+      if (pulse) for (const [dx, dy] of [[-2, -2], [14, -2], [-2, 12], [14, 12]]) G.rect(starX + dx, starY + dy, 1, 1, '#ffd23f');
+      G.draw(P.star, starX - 1, starY - 1);
+      tr.lights.forEach(([ox, oy], i) => {
+        if (i % 5 || Math.sin(G.t * 2.5 + i * 2.1) < 0.93) return;
+        const x = tx + ox + (i % 2 ? 2 : -2), y = ty + oy - 1;
+        G.rect(x - 1, y, 3, 1, '#ffffff');
+        G.rect(x, y - 1, 1, 3, '#ffffff');
+      });
+    }
+    return { tx, ty, starX, starY };
+  }
+
   G.Intro = function () {
     const A = G.audio, P = sprites();
     const S = { phase: 'gift', gt: 0, open: 0, t: 0, ei: 0, parts: [], floats: [], hops: {}, heartT: 0, skipTap: null, leaving: 0, gone: false };
@@ -342,7 +399,6 @@
 
     // 窗户玻璃区域（世界坐标，相对房子），他会出现在这里
     const WIN = { x: 8, y: -24, w: 18, h: 13 };
-    const BULBS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#7bd389'];
     function drawHouse(cam, gy, doorOpen) {
       const x = HOUSE_X - cam, blink = Math.floor(G.t * 3);
 
@@ -619,62 +675,16 @@
       }
 
       // ---- 圣诞树 ----
-      const tr = fancyTree(treeH(gy)), tx = IN_TREE_X - tr.w / 2, ty = gy + 1 - tr.h;
-      G.draw(tr.c, tx, ty);
-
-      // 金色彩带：亮灯时从左到右铺开，之后有一道亮光沿着彩带流动
-      if (lit) {
-        const shown = Math.floor((t - T.lights) / 0.5 * tr.tinsel.length);
-        const run = Math.floor(G.t * 14);
-        tr.tinsel.slice(0, shown).forEach(([ox, oy], i) => {
-          G.rect(tx + ox, ty + oy, 1, 1, (ox + run) % 9 === 0 ? '#fff6d0' : ox % 2 ? '#ffd23f' : '#e0a82e');
-        });
-      }
-
-      // 装饰球：一颗一颗挂上去（大的 2x2 带高光）
+      const tr = fancyTree(treeH(gy));
       const n = G.clamp(Math.floor((t - T.deco) / ORN_GAP) + 1, 0, tr.spots.length);
-      for (let i = 0; i < n; i++) {
-        const [ox, oy] = tr.spots[i], fresh = t - (T.deco + i * ORN_GAP) < 0.1;
-        const c = fresh ? '#ffffff' : ORN_COLORS[i % ORN_COLORS.length];
-        if (i % 3 === 2) { G.rect(tx + ox, ty + oy, 1, 1, c); continue; }
-        G.rect(tx + ox, ty + oy, 2, 2, c);
-        G.rect(tx + ox, ty + oy, 1, 1, '#ffffff');
-        G.rect(tx + ox + 1, ty + oy + 1, 1, 1, '#1b1433');
-      }
-
-      // 彩灯：逐个亮起，各自闪烁，亮的时候带一圈光晕
-      if (lit) {
-        tr.lights.forEach(([ox, oy], i) => {
-          if (t - T.lights < i * 0.015) return;
-          const on = Math.sin(G.t * 3 + i * 1.7) > -0.2, c = BULBS[i % 4];
-          const x = tx + ox, y = ty + oy;
-          if (on && i % 3 === 0) {
-            G.rect(x - 1, y, 3, 1, '#fff6d0');
-            G.rect(x, y - 1, 1, 3, '#fff6d0');
-          }
-          G.rect(x, y, 1, 1, on ? c : '#2b4a3a');
-        });
-      }
-
-      // 星星：她抛上去之后放光
-      const starX = IN_TREE_X - 6, starY = ty - 10;
+      const { starX, starY } = drawTree(tr, IN_TREE_X, gy, {
+        orn: n,
+        fresh: i => t - (T.deco + i * ORN_GAP) < 0.1,
+        tinsel: lit ? (t - T.lights) / 0.5 : 0,
+        lightsT: lit ? t - T.lights : -1,
+        star: t >= T.star,
+      });
       if (t >= T.star) {
-        const pulse = Math.floor(G.t * 3) % 2;
-        const L = pulse ? 4 : 3;
-        G.rect(IN_TREE_X - 0.5, starY - L - 1, 1, L, '#f5a623');
-        G.rect(starX - L - 1, starY + 4, L, 1, '#f5a623');
-        G.rect(starX + 14, starY + 4, L, 1, '#f5a623');
-        if (pulse) for (const [dx, dy] of [[-2, -2], [14, -2], [-2, 12], [14, 12]]) G.rect(starX + dx, starY + dy, 1, 1, '#ffd23f');
-        G.draw(P.star, starX - 1, starY - 1);
-
-        // 树周围随机一闪一闪的小星光
-        tr.lights.forEach(([ox, oy], i) => {
-          if (i % 5 || Math.sin(G.t * 2.5 + i * 2.1) < 0.93) return;
-          const x = tx + ox + (i % 2 ? 2 : -2), y = ty + oy - 1;
-          G.rect(x - 1, y, 3, 1, '#ffffff');
-          G.rect(x, y - 1, 1, 3, '#ffffff');
-        });
-
         // 树下的礼物堆
         for (const [gx, gw, gh, c1, c2] of [[-13, 7, 6, '#5bc0eb', '#ffffff'], [-6, 9, 8, '#e23b4b', '#ffd23f'], [4, 7, 5, '#ffd23f', '#e23b4b'], [11, 5, 4, '#b388ff', '#ffffff']]) {
           const x = IN_TREE_X + gx, y = gy + 3 - gh;
@@ -796,7 +806,7 @@
         }
         if (S.leaving && (S.leaving += dt) > 0.4 && !S.gone) {
           S.gone = true;
-          G.transition(() => G.Stage());
+          G.transition(() => G.Home());
         }
       },
 
@@ -915,4 +925,5 @@
       },
     };
   };
+  G.ART = { sprites, fancyTree, drawTree, treeH, ORN_COLORS, BULBS };
 })();
