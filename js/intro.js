@@ -617,7 +617,7 @@
       if (lit && (t - T.lights > 0.25 || flick % 2)) G.ctx.drawImage(getHalo(W2, H2, gy), 0, 0);
 
       // 左右两扇窗：窗外下雪，奶油色窗帘，窗台蜡烛
-      const wy = Math.max(46, gy - 52);
+      const wy = Math.max(54, gy - 52);   // 屏幕偏方（如折叠屏）时往下让开标题
       for (const wx of [3, 71]) {
         G.rect(wx - 1, wy - 1, 18, 20, '#a06a46');
         G.rect(wx, wy, 16, 18, '#1a1f4f');
