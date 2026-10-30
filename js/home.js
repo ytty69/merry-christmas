@@ -48,46 +48,43 @@
     { x0: 190, x1: 270, wall: '#dcefe4', pat: '#c6e2d2', kitchen: true }, // 餐厅
     { x0: 270, x1: 374, wall: '#f5dede', pat: '#ecc8c8' },              // 卧室
   ];
-  // 挂在衣架上的大衣：挂钩、木衣架、斜肩、垂下的两只袖子、V 领、双排扣、腰带、散开的下摆
+  // 挂在挂钩上的一件简单拉链外套
   const COAT_ROWS = [
-    '.......mm........',
-    '......m..m.......',
-    '........m........',
-    '...bbbbbbbbbbb...',
-    '..kkkkcwwwckkkk..',
-    'khskhcvwwwvcsksSk',
-    'khskhccvwvccsksSk',
-    'khskhcccvcccsksSk',
-    'khskhcycccycsksSk',
-    'khskhcccvcccsksSk',
-    'khskhcycvcycsksSk',
-    'khskhcccvcccsksSk',
-    'khskttttytttsksSk',
-    'khskhcccvcccsksSk',
-    'kttkhcccvcccskttk',
-    '..khccccvccccsk..',
-    '..khccccvccccsk..',
-    '..khccccvccccsk..',
-    '..khccccvccccsk..',
-    '..ksssssssssssk..',
-    '...kkkkk.kkkkk...',
+    '....kkkkk....',
+    '..kkcczcckk..',
+    '.kcccczcccck.',
+    'kccdcczccdcck',
+    'kccdcczccdcck',
+    'kccdcczccdcck',
+    'kccdcczccdcck',
+    'kccdpczcpdcck',
+    'kccdcczccdcck',
+    'kddkcczcckddk',
+    '...kcczcck...',
+    '...kddzddk...',
+    '...kkkkkkk...',
   ];
-  const COAT_PAL = { k: '#101632', s: '#26325e', S: '#1e2850', h: '#4a5c9e', c: '#34447e', v: '#26325e', w: '#f3e6c8', y: '#ffd23f', t: '#1a2248', b: '#8a5a3c', m: '#c0c8d8' };
+  const COAT_PAL = { k: '#1a3326', c: '#3f7a55', d: '#2f6045', p: '#2f6045', z: '#e8e0d0' };
   let coatSpr = null;
   const COAT = () => coatSpr || (coatSpr = G.makeSprite(COAT_ROWS, COAT_PAL));
-  // 趴着的小狗：棕色身子、白色口鼻和爪子、深色耳朵
+  // 正面坐着的柴犬：竖耳朵、奶白色的脸颊和胸口、小鼻子、粉舌头
   const DOG_ROWS = [
-    '..kk..........',
-    '.kddk.........',
-    'kbbbbk........',
-    'kbebbbkkkkkk..',
-    'nwwbbbbbbbbbk.',
-    '.kwwwbbbbbbbbk',
-    '..kwwkwwbbwwbk',
-    '...kk.kk..kk..',
+    '.kk.......kk.',
+    '.kok.....kok.',
+    '.koookkkoook.',
+    'koooooooooook',
+    'kooeoooooeook',
+    'kpwwwwwwwwwpk',
+    'kowwwwnwwwwok',
+    '.kwwwwqwwwwk.',
+    '..kkwwwwwkk..',
+    '.kooowwwoook.',
+    'kooowwwwwoook',
+    'kowwkoookwwok',
+    '.kkkkkkkkkkk.',
   ];
   let dogSpr = null;
-  const DOG = () => dogSpr || (dogSpr = G.makeSprite(DOG_ROWS, { k: '#3a2414', b: '#b06a2a', d: '#7a4418', w: '#f3e6c8', e: '#1b1433', n: '#1b1433' }));
+  const DOG = () => dogSpr || (dogSpr = G.makeSprite(DOG_ROWS, { k: '#3a2414', o: '#d8823a', w: '#f6e7cf', e: '#1b1433', n: '#1b1433', p: '#ffb3a0', q: '#ff7a8a' }));
   const FAIRY = [276, 284, 292, 300, 308, 316, 324, 332, 340, 348, 356, 364];   // 卧室墙上小星星灯的 x
 
   G.Home = function () {
@@ -209,8 +206,8 @@
             later(0.2, () => G.transition(() => G.Fireworks(scene, T.door)));
           },
         },
-        { id: 'rack', r: [40, gy - 41, 17, 41], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
-        { id: 'dog', r: [91, gy - 2, 18, 11], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 99, gy - 6); hearts(99, gy - 2, 3); } },
+        { id: 'rack', r: [41, gy - 41, 15, 41], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
+        { id: 'dog', r: [90, gy - 12, 18, 16], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 98, gy - 14); hearts(98, gy - 10, 3); } },
         { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
         {
           id: 'gifts', r: [108, gy - 10, 28, 13], stand: 112, act() {
@@ -358,7 +355,8 @@
       G.rect(X(46), gy - 40, 6, 3, '#e23b4b');
       G.rect(X(45), gy - 37, 8, 1, '#ffffff');
       G.rect(X(52), gy - 41, 2, 2, '#ffffff');
-      G.draw(COAT(), X(40), gy - 33);
+      G.rect(X(46), gy - 33, 6, 1, '#6e4630');
+      G.draw(COAT(), X(42), gy - 32);
       G.rect(X(56), gy - 2, 4, 2, '#5a3d2b');
       G.rect(X(61), gy - 2, 4, 2, '#5a3d2b');
 
@@ -445,12 +443,13 @@
         G.rect(sx + 1, gy - 19, 4, 6, '#e23b4b');
         G.rect(sx + 1, gy - 14, 6, 2, '#e23b4b');
       }
-      // 地毯上趴着的小狗（尾巴一直轻轻摇，点它会摇得更快）
-      const dx = X(92), dy = gy - 2, wagFast = S.t - S.wag < 1.5;
-      G.draw(DOG(), dx, dy);
+      // 地毯上坐着的小柴犬（卷尾巴一直轻轻摇，点它会摇得更快）
+      const dx = X(92), dy = gy - 10, wagFast = S.t - S.wag < 1.5;
       const up = Math.floor(G.t * (wagFast ? 12 : 3)) % 2;
-      G.rect(dx + 14, dy + (up ? 2 : 4), 1, 2, '#3a2414');
-      G.rect(dx + 15, dy + (up ? 1 : 4), 1, 2, '#b06a2a');
+      G.rect(dx + 11, dy + 8 + up, 4, 3, '#3a2414');
+      G.rect(dx + 12, dy + 9 + up, 2, 1, '#d8823a');
+      G.rect(dx + 13, dy + 8 + up, 1, 1, '#f6e7cf');
+      G.draw(DOG(), dx, dy);
 
       // ===== 餐厅（190~270） =====
       G.rect(X(194), gy - 58, 44, 14, '#f3e6c8');

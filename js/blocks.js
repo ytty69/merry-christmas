@@ -1,5 +1,5 @@
 /* 卧室游戏机里的小游戏「圣诞方块」
-   落下的每一格画成扎丝带的小盒子，拼满一整行就消除得分，并跳出「亲亲」
+   落下的每一格画成扎丝带的小盒子，拼满一整行就消除得分
    底部按钮：◀ ▶ 移动 / ▼ 加速 / ⤓ 直接落下 / ⟳ 旋转；左上角「回家」回到屋里 */
 (function () {
   const COLS = 10, ROWS = 18, BEST_KEY = 'xmas.blocks.best';
@@ -23,7 +23,6 @@
     L: ['#ff9f1c', '#ffffff', '#ffc878'],
   };
   const LINE_SCORE = [0, 100, 300, 500, 800];
-  const CHEER = ['', '一个亲亲', '双份亲亲!', '三份亲亲!', '超级亲亲!!'];
 
   const ICONS = {
     L: ['...w....', '..ww....', '.wwwwwww', 'wwwwwwww', '.wwwwwww', '..ww....', '...w....'],
@@ -109,8 +108,7 @@
         S.lines += full.length;
         S.level = 1 + Math.floor(S.lines / 10);
         A.play(full.length >= 4 ? 'sparkle' : 'coin');
-        S.floats.push({ text: CHEER[full.length], y: full[0], life: 1.2 });
-        S.floats.push({ text: '+' + pts, y: full[0] + 1.3, life: 1.2 });
+        S.floats.push({ text: '+' + pts, y: full[0], life: 1.2 });
         S.piece = null;
       } else spawn();
     }

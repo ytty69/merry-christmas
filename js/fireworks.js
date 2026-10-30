@@ -1,8 +1,10 @@
-/* 门外：两个人和雪人站在雪地里一起看烟花（从「我们的家」点门进来，点屏幕回家）
+/* 门外：两个人站在家门口，和雪人一起看烟花（从「我们的家」点门进来，点屏幕回家）
    烟花画在一半分辨率的画布上再放大；两个人和文字画在原分辨率上 */
 (function () {
   const NIGHT = ['#0b0b1a', '#121436', '#1a1f4f', '#243066', '#2f4280'];
   // [主色, 亮色]
+  // 房子往左挪一点：门在画面左侧，两人站在门口，雪人在右边
+  const HOUSE_CAM = 10, COUPLE = [36, 50];
   const COLORS = [['#ff4d6d', '#ffb3c1'], ['#ffd23f', '#fff3b0'], ['#5bc0eb', '#c4ecfa'], ['#7bd389', '#d0f5d8'], ['#b388ff', '#e4d4ff'], ['#ff9f1c', '#ffd8a0']];
 
   G.Fireworks = function (home, caption) {
@@ -18,7 +20,7 @@
     function launch(d) {
       S.count++;
       S.rockets.push({
-        x: G.rand(10, d.W2 - 10), y: d.gy - 4, vy: -G.rand(75, 95),
+        x: G.rand(30, d.W2 - 8), y: d.gy - 4, vy: -G.rand(75, 95),
         top: G.rand(14, d.gy * 0.45), c: G.pick(COLORS), heart: S.count % 4 === 0,
       });
       A.play('launch');
@@ -40,26 +42,6 @@
         const a = i / n * Math.PI * 2 + G.rand(-0.1, 0.1), sp = G.rand(16, 26);
         S.sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: G.rand(1, 1.5), max: 1.5, c: r.c, g: 10 });
       }
-    }
-
-    function drawSnowman(x, gy) {
-      G.circle(x, gy - 6, 6, '#c4d4f0');
-      G.circle(x - 1, gy - 6, 6, '#ffffff');
-      G.circle(x, gy - 16, 4, '#c4d4f0');
-      G.circle(x - 1, gy - 16, 4, '#ffffff');
-      G.rect(x - 3, gy - 17, 1, 1, '#1b1433');
-      G.rect(x + 1, gy - 17, 1, 1, '#1b1433');
-      G.rect(x - 1, gy - 16, 3, 1, '#ff9f1c');
-      G.rect(x - 4, gy - 12, 8, 2, '#e23b4b');
-      G.rect(x + 2, gy - 11, 2, 3, '#e23b4b');
-      for (const y of [gy - 8, gy - 5, gy - 2]) G.rect(x - 1, y, 1, 1, '#1b1433');
-      G.rect(x - 11, gy - 10, 5, 1, '#5a3d2b');
-      G.rect(x - 12, gy - 11, 1, 1, '#5a3d2b');
-      G.rect(x + 6, gy - 11, 5, 1, '#5a3d2b');
-      G.rect(x + 11, gy - 12, 1, 1, '#5a3d2b');
-      G.rect(x - 5, gy - 20, 9, 1, '#1b1433');
-      G.rect(x - 3, gy - 25, 5, 5, '#1b1433');
-      G.rect(x - 3, gy - 22, 5, 1, '#e23b4b');
     }
 
     return {
@@ -88,7 +70,7 @@
           if (f.y > d.H2) { f.y = -2; f.x = G.rand(0, 90); }
         }
         // 两人中间偶尔冒出小爱心
-        if (Math.random() < dt * 0.8) S.hearts.push({ x: G.W / 2 - 28 + G.rand(-4, 4), y: d.gy * 2 - 44, life: 1.6 });
+        if (Math.random() < dt * 0.8) S.hearts.push({ x: (COUPLE[0] + COUPLE[1]) / 2 * 2 - HOUSE_CAM * 2 + G.rand(-4, 4), y: d.gy * 2 - 44, life: 1.6 });
         for (const h of S.hearts) { h.y -= 18 * dt; h.life -= dt; }
         S.hearts = S.hearts.filter(h => h.life > 0);
       },
@@ -112,7 +94,7 @@
           G.rect(i, gy - h, 2, h, '#2b3a6e');
           G.rect(i, gy - h, 2, 1, '#8ea0c8');
         }
-        for (let k = 0; k < 10; k++) {
+        for (let k = 5; k < 10; k++) {
           const x = k * 10 + ((k * 7) % 5), h = 8 + ((k * 5) % 6);
           for (let j = 0; j < h; j++) G.rect(x - Math.floor(j / 2), gy - h + j, Math.floor(j / 2) * 2 + 1, 1, '#16243f');
         }
@@ -133,19 +115,19 @@
           G.rect(p.x, p.y, 1, 1, k > 0.5 ? p.c[1] : p.c[0]);
         }
 
-        // 雪地 + 雪人
+        // 雪地 + 家（小木屋自带门口的雪人）
         G.rect(0, gy, W2, H2 - gy, '#dfe8fb');
         G.rect(0, gy, W2, 1, '#ffffff');
         for (let x = 2; x < W2; x += 6) G.rect(x + (x * 13) % 4, gy + 3 + (x * 7) % 10, 2, 1, '#c4d4f0');
-        drawSnowman(Math.round(W2 * 0.76), gy + 2);
+        G.ART.drawHouse(HOUSE_CAM, gy, false);
         for (const f of S.flakes) G.rect(f.x, f.y, 1, 1, '#ffffff');
 
         G.ctx = main;
         ctx.drawImage(wb, 0, 0, W2 * 2, H2 * 2);
 
-        // 两个人并肩站在雪地上
-        const feet = (gy + 3) * 2;
-        for (const [img, x] of [[P.girl, G.W / 2 - 42], [P.boy, G.W / 2 - 14]]) {
+        // 两个人并肩站在家门口
+        const feet = (gy + 4) * 2;
+        for (const [img, x] of [[P.girl, (COUPLE[0] - HOUSE_CAM) * 2], [P.boy, (COUPLE[1] - HOUSE_CAM) * 2]]) {
           if (img.complete && img.naturalWidth) G.draw(img, Math.round(x) - 16, feet - 40);
         }
         for (const h of S.hearts) {
