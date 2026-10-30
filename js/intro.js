@@ -31,17 +31,32 @@
   // ---------- 精灵 ----------
   // 两个角色是 32x41 的像素图（脚底在第 40 行），在原分辨率上 1:1 绘制
   function loadImg(src) { const i = new Image(); i.src = src; return i; }
+  // 树顶的大星星：金色 + 右下橙色阴影，外面自动加一圈深色描边（浅色墙上也醒目）
   const STAR = [
     '....y....',
     '...yyy...',
     '...ywy...',
     'yyyywyyyy',
-    '.yywwwyy.',
-    '..yywyy..',
-    '..yy.yy..',
-    '.yy...yy.',
-    '.y.....y.',
+    '.yywwwyo.',
+    '..yywyo..',
+    '..yo.oo..',
+    '.yo...oo.',
+    '.o.....o.',
   ];
+  function outlined(rows, ch) {
+    const h = rows.length + 2, w = rows[0].length + 2;
+    const at = (x, y) => (rows[y - 1] || '')[x - 1] || '.';
+    const out = [];
+    for (let y = 0; y < h; y++) {
+      let r = '';
+      for (let x = 0; x < w; x++) {
+        const c = at(x, y);
+        r += c !== '.' ? c : [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => at(x + dx, y + dy) !== '.') ? ch : '.';
+      }
+      out.push(r);
+    }
+    return out;
+  }
 
   let SPR = null;
   function sprites() {
@@ -49,7 +64,7 @@
     SPR = {
       girl: loadImg('assets/girl.png?v=2'),   // 去砍树的她（换图后把 v 加 1）
       boy: loadImg('assets/boy.png?v=2'),     // 在家等的他
-      star: G.makeSprite(STAR, { y: '#ffd23f', w: '#fff6d0' }),
+      star: G.makeSprite(outlined(STAR, 'k'), { y: '#ffc61a', w: '#fff6d0', o: '#f08c00', k: '#5a2a0a' }),
       tree: pine(18, 30, false),
       bgTree: pine(8, 14, true),
       forest: {},
@@ -646,7 +661,7 @@
         G.rect(starX - L - 1, starY + 3, L, 1, '#f5a623');
         G.rect(starX + 10, starY + 3, L, 1, '#f5a623');
         if (pulse) for (const [dx, dy] of [[-2, -2], [10, -2], [-2, 9], [10, 9]]) G.rect(starX + dx, starY + dy, 1, 1, '#ffd23f');
-        G.draw(P.star, starX, starY);
+        G.draw(P.star, starX - 1, starY - 1);
 
         // 树周围随机一闪一闪的小星光
         tr.lights.forEach(([ox, oy], i) => {
@@ -668,7 +683,7 @@
       } else if (t >= T.throwStar) {
         const p = (t - T.throwStar) / (T.star - T.throwStar);
         const sx = IN_GIRL_X + 4 + (starX - IN_GIRL_X - 4) * p, sy = gy - 8 + (starY - gy + 8) * p - Math.sin(p * Math.PI) * 16;
-        G.draw(P.star, sx, sy);
+        G.draw(P.star, sx - 1, sy - 1);
       }
 
       // 右下角睡觉的小猫（呼吸起伏）
