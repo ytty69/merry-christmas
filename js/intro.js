@@ -199,7 +199,8 @@
     c.fillRect(0, 0, w, h);
   }
 
-  function logo(s, y, col, scale) {
+  // hl：字顶那一排高光的颜色（用本色的浅色，避免和浅色背景混在一起）
+  function logo(s, y, col, scale, hl) {
     const cx = G.W / 2, o = { scale, align: 'center' };
     [[-1, 0], [1, 0], [0, -1], [0, 1], [0, scale], [-1, scale], [1, scale]].forEach(([dx, dy]) =>
       G.text(s, cx + dx, y + dy, Object.assign({}, o, { color: '#1b1433' })));
@@ -208,7 +209,7 @@
     G.ctx.beginPath();
     G.ctx.rect(0, y, G.W, scale);
     G.ctx.clip();
-    G.text(s, cx, y, Object.assign({}, o, { color: '#fff6d0' }));
+    G.text(s, cx, y, Object.assign({}, o, { color: hl }));
     G.ctx.restore();
   }
 
@@ -849,8 +850,8 @@
         if (t >= T.title) {
           const drop = (t0, ty) => Math.round(-40 + (ty + 40) * G.ease.outBounce(G.clamp((t - t0) / 0.8, 0, 1)));
           const bob = t > T.ready ? Math.round(Math.sin(G.t * 2) * 1.5) : 0;
-          logo('MERRY', drop(T.title, 16) + bob, '#ff4d6d', 3);
-          logo('CHRISTMAS', drop(T.title + 0.25, 46) + bob, '#2f9e5e', 2);
+          logo('MERRY', drop(T.title, 16) + bob, '#ff4d6d', 3, '#ffa3b5');
+          logo('CHRISTMAS', drop(T.title + 0.25, 46) + bob, '#2f9e5e', 2, '#86e0a0');
           if (t > T.title + 1) G.text('~ 圣诞快乐 ~', W / 2, 72, { color: '#a8283a', align: 'center', shadow: '#fff6d0' });
         }
         if (t >= T.ready) {
