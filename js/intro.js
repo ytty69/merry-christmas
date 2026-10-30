@@ -21,7 +21,9 @@
   const HOUSE_X = 0, DOOR_X = 44, CHOP_X = 155, TREE_X = 166, WORLD = 224;
   // 森林里的树 [x, 宽, 高]；150~200 留一片空地给要砍的那棵
   const FOREST = [[96, 14, 24], [108, 18, 30], [122, 12, 20], [136, 16, 28], [206, 18, 32], [218, 12, 22]];
-  const IN_TREE_X = 24, IN_GIRL_X = 45, IN_BOY_X = 59, ORN_GAP = 0.22;
+  // 室内：树居中，两人分站左右（脚踩在树前一点，有前后层次）
+  const IN_TREE_X = 45, IN_GIRL_X = 21, IN_BOY_X = 69, FEET = 5, N_ORN = 20, ORN_GAP = 0.17;
+  const treeH = gy => G.clamp(gy - 52, 46, 72);
   const NIGHT = ['#0b0b1a', '#121436', '#1a1f4f', '#243066', '#2f4280'];
   const HANDLE = '#8a5a3c', METAL = '#9aa5b8';
   const ORN_COLORS = ['#ff4d6d', '#ffd23f', '#5bc0eb', '#ffffff', '#b388ff'];
@@ -29,7 +31,17 @@
   // ---------- 精灵 ----------
   // 两个角色是 32x41 的像素图（脚底在第 40 行），在原分辨率上 1:1 绘制
   function loadImg(src) { const i = new Image(); i.src = src; return i; }
-  const STAR = ['..y..', '.yyy.', 'yywyy', '.yyy.', '.y.y.'];
+  const STAR = [
+    '....y....',
+    '...yyy...',
+    '...ywy...',
+    'yyyywyyyy',
+    '.yywwwyy.',
+    '..yywyy..',
+    '..yy.yy..',
+    '.yy...yy.',
+    '.y.....y.',
+  ];
 
   let SPR = null;
   function sprites() {
@@ -37,16 +49,69 @@
     SPR = {
       girl: loadImg('assets/girl.png?v=2'),   // 去砍树的她（换图后把 v 加 1）
       boy: loadImg('assets/boy.png?v=2'),     // 在家等的他
-      star: G.makeSprite(STAR, { y: '#ffd23f', w: '#ffffff' }),
+      star: G.makeSprite(STAR, { y: '#ffd23f', w: '#fff6d0' }),
       tree: pine(18, 30, false),
-      bigTree: pine(28, 46, false),   // 进屋后的近景大树
       bgTree: pine(8, 14, true),
       forest: {},
     };
     for (const [, w, h] of FOREST) SPR.forest[w + 'x' + h] = pine(w, h, false);
-    SPR.spots = ornamentSpots(SPR.bigTree);
-    SPR.lights = lightPoints(SPR.bigTree);
     return SPR;
+  }
+
+  // 室内的华丽圣诞树（按高度缓存）：五层枝叶 + 下垂的枝尖；同时算好装饰球 / 金色彩带 / 彩灯的位置
+  const fancyCache = {};
+  function fancyTree(h) {
+    if (fancyCache[h]) return fancyCache[h];
+    const w = 46, c = G.makeCanvas(w, h), x = c.getContext('2d');
+    const cx = w / 2, b = h - 4;
+    const col = ['#14482f', '#1f6a43', '#2f8a55', '#4fae6c'];
+    G.rect(cx - 2, b, 4, 4, '#5a3d2b', x);
+    G.rect(cx - 2, b, 1, 4, '#7a5236', x);
+    // 从最下层往上画：上层的下沿压在下层上面，并在下层投一道阴影，层次分明
+    for (let k = 4; k >= 0; k--) {
+      const a = k * 0.19, z = Math.min(1, a + 0.28), w0 = 0.05 + k * 0.06, w1 = 0.2 + k * 0.075;
+      const y0 = Math.round(a * b), y1 = Math.round(z * b);
+      let hwB = 1;
+      for (let y = y0; y < y1; y++) {
+        const kk = (y - y0) / Math.max(1, y1 - y0 - 1);
+        const hw = Math.max(1, Math.round((w0 + (w1 - w0) * kk) * w));
+        G.rect(cx - hw, y, hw * 2, 1, col[0], x);
+        G.rect(cx - hw, y, hw * 2 - 1, 1, col[1], x);
+        G.rect(cx - hw, y, Math.max(1, Math.round(hw * 0.9)), 1, col[2], x);
+        G.rect(cx - hw + 1, y, Math.max(1, Math.round(hw * 0.35)), 1, col[3], x);
+        hwB = hw;
+      }
+      x.globalCompositeOperation = 'source-atop';
+      G.rect(cx - hwB + 1, y1 + 1, hwB * 2 - 2, 2, '#0f3a26', x);
+      x.globalCompositeOperation = 'source-over';
+      for (let i = k % 2; i < hwB * 2; i += 3) G.rect(cx - hwB + i, y1, 1, 1, col[0], x);
+    }
+    const d = x.getImageData(0, 0, w, h).data, spans = [];
+    for (let y = 0; y < h; y++) spans.push(rowSpan(d, w, y));
+
+    let spots = [];
+    for (let y = 7, r = 0; y < b - 3; y += 4, r++) {
+      const [l, rr] = spans[y];
+      if (l < 0 || rr - l < 5) continue;
+      (r % 2 ? [0.2, 0.5, 0.8] : [0.35, 0.65]).forEach(f => spots.push([Math.round(l + 1 + (rr - l - 3) * f), y]));
+    }
+    spots = spots.map((s, i) => [s, (i * 7) % spots.length]).sort((p, q) => p[1] - q[1]).map(s => s[0]).slice(0, N_ORN);
+
+    const tinsel = [];
+    for (const f of [0.26, 0.44, 0.62, 0.8]) {
+      const y0 = Math.round(f * b);
+      for (let i = 0; i < w; i++) {
+        const y = y0 + Math.round(i / w * 6), sp = spans[y];
+        if (sp && sp[0] >= 0 && i > sp[0] && i < sp[1]) tinsel.push([i, y]);
+      }
+    }
+    const lights = [];
+    for (let y = 4; y < b - 2; y += 3) {
+      const [l, r] = spans[y];
+      if (l < 0) continue;
+      for (let i = l + 1 + (y * 3) % 4; i < r; i += 5) lights.push([i, y]);
+    }
+    return (fancyCache[h] = { c, w, h, spots, tinsel, lights });
   }
 
   // 程序生成的松树（三层），带积雪
@@ -97,29 +162,11 @@
     return (rotCache[key] = { c, R });
   }
 
-  // 按树的形状自动找挂装饰的位置
+  // 某一行树形的左右边界（用来把装饰挂在树上）
   function rowSpan(data, w, y) {
     let l = -1, r = -1;
     for (let x = 0; x < w; x++) if (data[(y * w + x) * 4 + 3]) { if (l < 0) l = x; r = x; }
     return [l, r];
-  }
-  function ornamentSpots(img) {
-    const w = img.width, d = img.getContext('2d').getImageData(0, 0, w, img.height).data, spots = [];
-    for (let y = 5, row = 0; y < img.height - 5; y += 3, row++) {
-      const [l, r] = rowSpan(d, w, y);
-      if (l < 0 || r - l < 4) continue;
-      (row % 2 ? [0.25, 0.75] : [0.5]).forEach(f => spots.push([Math.round(l + 1 + (r - l - 2) * f), y]));
-    }
-    // 打乱顺序，挂上去的时候看起来更随意
-    return spots.map((s, i) => [s, (i * 7) % spots.length]).sort((a, b) => a[1] - b[1]).map(s => s[0]).slice(0, 16);
-  }
-  function lightPoints(img) {
-    const w = img.width, d = img.getContext('2d').getImageData(0, 0, w, img.height).data, pts = [];
-    for (const y of [10, 18, 26, 33]) {
-      const [l, r] = rowSpan(d, w, y);
-      for (let s = 0; s <= 7; s++) pts.push([Math.round(l + (r - l) * s / 7), Math.round(y + 3 * s / 7)]);
-    }
-    return pts;
   }
 
   // 2x2 抖动的像素风淡入淡出（在原分辨率上画，所以每格 2px）
@@ -192,10 +239,12 @@
     });
     at(T.land + 0.1, () => { A.play('jump'); hop('girl', 0.4, 8); });
     // 挂装饰时只偶尔轻轻跳一下，避免画面一直晃
-    P.spots.forEach((_, i) => at(T.deco + i * ORN_GAP, () => {
-      A.play('ding', i);
-      if (i % 4 === 0) hop(i % 8 ? 'boy' : 'girl', 0.35, 4);
-    }));
+    for (let i = 0; i < N_ORN; i++) {
+      at(T.deco + i * ORN_GAP, () => {
+        A.play('ding', i);
+        if (i % 5 === 0) hop(i % 10 ? 'boy' : 'girl', 0.35, 4);
+      });
+    }
     at(T.lights, () => A.play('sparkle'));
     at(T.throwStar, () => { A.play('jump'); hop('girl', 0.45, 12); });
     at(T.star, () => {
@@ -204,9 +253,10 @@
       A.play('ding', 11);
       hop('boy', 0.4, 8);
       G.flash = 0.25;
-      for (let i = 0; i < 16; i++) {
-        const a = i / 16 * Math.PI * 2;
-        part({ x: IN_TREE_X, y: gy - 47, vx: Math.cos(a) * 40, vy: Math.sin(a) * 40, life: 0.6, c: G.pick(['#ffd23f', '#ffffff']) });
+      const top = gy + 1 - treeH(gy) - 3;
+      for (let i = 0; i < 20; i++) {
+        const a = i / 20 * Math.PI * 2;
+        part({ x: IN_TREE_X, y: top, vx: Math.cos(a) * 45, vy: Math.sin(a) * 45, life: 0.7, c: G.pick(['#ffd23f', '#ffffff', '#fff6d0']) });
       }
     });
     events.sort((a, b) => a.t - b.t);
@@ -435,179 +485,206 @@
     }
 
     // ---------- 室内 ----------
+    // 树亮灯后墙上和地上的暖光（抖动点阵，按尺寸缓存）
+    let halo = null, haloKey = '';
+    function getHalo(W2, H2, gy) {
+      const key = W2 + 'x' + H2 + 'x' + gy;
+      if (halo && haloKey === key) return halo;
+      const c = G.makeCanvas(W2, H2), x = c.getContext('2d'), cy = gy - 30;
+      for (let y = 0; y < H2; y++) {
+        for (let i = 0; i < W2; i++) {
+          let col = null;
+          if (y < gy) {
+            const r = Math.hypot(i - IN_TREE_X, y - cy);
+            if (r < 20) col = (i + y) % 2 ? '#6e3c2e' : '#5c3029';
+            else if (r < 30) col = (i + y) % 2 ? '#5c3029' : null;
+            else if (r < 40) col = (i + y) % 4 === 0 ? '#4c2827' : null;
+          } else {
+            const e = Math.hypot((i - IN_TREE_X) / 42, (y - gy - 4) / 10);
+            if (e < 0.6) col = (i + y) % 2 ? '#9a6238' : null;
+            else if (e < 1) col = (i + y) % 4 === 0 ? '#8a5634' : null;
+          }
+          if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
+        }
+      }
+      halo = c;
+      haloKey = key;
+      return c;
+    }
+
     function drawInside(t, d) {
       const { W2, H2, gy } = d;
-      const flick = Math.floor(G.t * 10);
+      const flick = Math.floor(G.t * 10), lit = t >= T.lights;
 
-      // 墙纸：深绿底 + 菱形暗纹
-      G.rect(0, 0, W2, gy, '#1e3a2f');
+      // 暖色墙纸 + 暗纹
+      G.rect(0, 0, W2, gy, '#3b1e22');
       for (let y = 2, r = 0; y < gy - 18; y += 7, r++) {
         for (let x = (r % 2) * 4 + 1; x < W2; x += 8) {
-          G.rect(x + 1, y, 1, 1, '#2a4d3f');
-          G.rect(x, y + 1, 3, 1, '#2a4d3f');
-          G.rect(x + 1, y + 2, 1, 1, '#2a4d3f');
+          G.rect(x + 1, y, 1, 1, '#4a272c');
+          G.rect(x, y + 1, 3, 1, '#4a272c');
+          G.rect(x + 1, y + 2, 1, 1, '#4a272c');
         }
       }
       // 护墙板 + 腰线 + 踢脚线
-      G.rect(0, gy - 17, W2, 14, '#5a3d2b');
+      G.rect(0, gy - 17, W2, 14, '#4a2e20');
       for (let x = 2; x < W2; x += 14) {
-        G.rect(x, gy - 14, 11, 9, '#4a3122');
-        G.rect(x, gy - 14, 11, 1, '#3a2618');
-        G.rect(x, gy - 6, 11, 1, '#6f4b33');
+        G.rect(x, gy - 14, 11, 9, '#3c2418');
+        G.rect(x, gy - 6, 11, 1, '#5e3a26');
       }
-      G.rect(0, gy - 18, W2, 2, '#7a5236');
-      G.rect(0, gy - 18, W2, 1, '#9a6a46');
-      G.rect(0, gy - 3, W2, 3, '#3a2618');
+      G.rect(0, gy - 18, W2, 2, '#6e4630');
+      G.rect(0, gy - 18, W2, 1, '#8a5a3c');
+      G.rect(0, gy - 3, W2, 3, '#2e1a12');
 
-      // 墙上的一串彩灯（树上的灯亮起后开始闪）
-      const gl = gy - 62, blinkG = Math.floor(G.t * 3);
-      const sag = x => gl + Math.round(Math.sin(x / W2 * Math.PI * 3) ** 2 * 4);
-      for (let x = 0; x < W2; x++) G.rect(x, sag(x), 1, 1, '#16302a');
-      for (let x = 4, i = 0; x < W2; x += 8, i++) {
-        const lit = t >= T.lights && (i + blinkG) % 3 !== 0;
-        G.rect(x, sag(x) + 1, 2, 2, lit ? ORN_COLORS[i % 3] : '#2b4a40');
-      }
-
-      // 窗户：窗帘、帘头、窗台上的蜡烛
-      const wx = 40, wy = gy - 46;
-      G.rect(wx, wy, 20, 18, '#5a3d2b');
-      G.rect(wx + 1, wy + 1, 18, 16, '#1a1f4f');
-      G.rect(wx + 13, wy + 3, 3, 3, '#fff3b0');
-      for (let i = 0; i < 8; i++) {
-        G.rect(wx + 2 + (i * 5) % 16, wy + 1 + Math.floor((G.t * 8 + i * 7) % 15), 1, 1, '#ffffff');
-      }
-      G.rect(wx + 9, wy + 1, 2, 16, '#5a3d2b');
-      G.rect(wx + 1, wy + 8, 18, 1, '#5a3d2b');
-      G.rect(wx + 1, wy + 15, 18, 2, '#ffffff');
-      G.rect(wx - 1, wy + 17, 22, 2, '#7a5236');
-      G.rect(wx + 3, wy + 13, 2, 4, '#fff6d0');
-      G.rect(wx + 3, wy + 12, 1, 1, flick % 3 ? '#ffd23f' : '#ff9f1c');
-      // 奶油色窗帘（和红色的爱心、蝴蝶结拉开对比）
-      for (const cx of [wx - 4, wx + 19]) {
-        G.rect(cx, wy - 2, 5, 22, '#e8d8b0');
-        G.rect(cx + 2, wy - 2, 1, 22, '#c8b48a');
-        G.rect(cx, wy + 9, 5, 1, '#c22f40');
-      }
-      G.rect(wx - 5, wy - 4, 30, 3, '#f3e6c8');
-      G.rect(wx - 5, wy - 2, 30, 1, '#d8b04a');
-      for (let x = wx - 5; x < wx + 25; x += 3) G.rect(x + 1, wy - 1, 1, 1, '#f3e6c8');
-
-      // 壁炉：照片、花环、蜡烛、袜子、炉火
-      const fx = 66;
-      G.rect(fx + 6, gy - 46, 12, 10, '#ffd23f');
-      G.rect(fx + 7, gy - 45, 10, 8, '#fff6d0');
-      G.draw(G.SPR.heartS, fx + 9, gy - 44);
-      G.rect(fx, gy - 20, 24, 20, '#7a6e98');
-      for (let y = gy - 16; y < gy; y += 4) {
-        G.rect(fx, y, 24, 1, '#6b5f8a');
-        G.rect(fx + ((y >> 2) % 2 ? 6 : 12), y - 3, 1, 3, '#6b5f8a');
-      }
-      G.rect(fx + 5, gy - 12, 14, 12, '#1b1433');
-      for (let i = 0; i < 5; i++) {
-        const h = 3 + ((flick + i * 3) % 4);
-        G.rect(fx + 6 + Math.round(i * 2.4), gy - h - 1, 2, h, i % 2 ? '#ff9f1c' : '#ffd23f');
-      }
-      G.rect(fx + 6, gy - 2, 12, 2, '#5a3d2b');
-      G.rect(fx - 2, gy - 22, 28, 3, '#5a3d2b');
-      G.rect(fx - 2, gy - 22, 28, 1, '#7a5236');
-      for (const cx of [fx + 1, fx + 21]) {
-        G.rect(cx, gy - 27, 2, 5, '#fff6d0');
-        G.rect(cx, gy - 28, 1, 1, (flick + cx) % 3 ? '#ffd23f' : '#ff9f1c');
-      }
-      G.rect(fx - 2, gy - 23, 28, 2, '#2f6e4a');
-      for (let x = fx - 1; x < fx + 26; x += 4) G.rect(x, gy - 22 + (x % 2), 1, 1, '#e23b4b');
-      G.rect(fx + 11, gy - 24, 3, 2, '#e23b4b');
-      for (const sx of [fx + 3, fx + 14]) {
-        G.rect(sx, gy - 20, 6, 2, '#ffffff');
-        G.rect(sx + 1, gy - 18, 4, 6, '#e23b4b');
-        G.rect(sx + 1, gy - 13, 6, 2, '#e23b4b');
-      }
-
-      // 木地板 + 炉火映在地上的暖光
-      G.rect(0, gy, W2, H2 - gy, '#7a4f32');
+      // 木地板
+      G.rect(0, gy, W2, H2 - gy, '#6e4429');
       for (let y = gy + 5, n = 0; y < H2; y += 6, n++) {
-        G.rect(0, y, W2, 1, '#6a432a');
-        for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#6a432a');
+        G.rect(0, y, W2, 1, '#5e3a22');
+        for (let x = (n % 2) * 9; x < W2; x += 18) G.rect(x, y - 5, 1, 5, '#5e3a22');
       }
-      for (let j = 0; j < 8; j++) {
-        for (let i = 0; i < 28 - j * 2; i++) {
-          if ((i + j + (flick >> 2)) % 3 === 0) G.rect(fx - 2 + j + i, gy + j, 1, 1, '#9a6a42');
+
+      // 亮灯后的暖光：先弱后强
+      if (lit && (t - T.lights > 0.25 || flick % 2)) G.ctx.drawImage(getHalo(W2, H2, gy), 0, 0);
+
+      // 左右两扇窗：窗外下雪，奶油色窗帘，窗台蜡烛
+      const wy = Math.max(46, gy - 52);
+      for (const wx of [3, 71]) {
+        G.rect(wx - 1, wy - 1, 18, 20, '#f3e6c8');
+        G.rect(wx, wy, 16, 18, '#1a1f4f');
+        G.rect(wx, wy, 16, 4, '#22285e');
+        for (let i = 0; i < 6; i++) G.rect(wx + 1 + (i * 5 + wx) % 14, wy + Math.floor((G.t * 7 + i * 6) % 17), 1, 1, '#ffffff');
+        G.rect(wx + 7, wy, 2, 18, '#f3e6c8');
+        G.rect(wx, wy + 8, 16, 1, '#f3e6c8');
+        G.rect(wx, wy + 16, 16, 2, '#ffffff');
+        G.rect(wx - 2, wy + 18, 20, 2, '#6e4630');
+        G.rect(wx + 11, wy + 14, 2, 4, '#fff6d0');
+        G.rect(wx + 11, wy + 13, 1, 1, (flick + wx) % 3 ? '#ffd23f' : '#ff9f1c');
+        for (const cx of [wx - 4, wx + 16]) {
+          G.rect(cx, wy - 2, 4, 22, '#e8d8b0');
+          G.rect(cx + (cx < wx ? 3 : 0), wy - 2, 1, 22, '#c8b48a');
+          G.rect(cx, wy + 9, 4, 1, '#c22f40');
+        }
+        G.rect(wx - 5, wy - 4, 26, 3, '#f3e6c8');
+        G.rect(wx - 5, wy - 2, 26, 1, '#d8b04a');
+      }
+
+      // 两侧墙顶的松枝花环 + 暖色小灯（树亮灯后一起亮）
+      const gl = wy - 9;
+      for (const [x0, x1] of [[0, 32], [58, W2]]) {
+        for (let x = x0; x < x1; x++) {
+          const y = gl + Math.round(Math.sin((x - x0) / (x1 - x0) * Math.PI) * 4);
+          G.rect(x, y, 1, 3, '#1f6a43');
+          if (x % 2) G.rect(x, y, 1, 1, '#4fae6c');
+          if ((x - x0) % 5 === 2) G.rect(x, y + 3, 1, 1, lit && (x + Math.floor(G.t * 2)) % 3 ? (x % 2 ? '#ffd23f' : '#fff6d0') : '#6e4630');
+        }
+        for (const bx of [x0 + 1, x1 - 4]) {
+          G.rect(bx, gl - 1, 3, 2, '#e23b4b');
+          G.rect(bx + 1, gl + 1, 1, 3, '#c22f40');
         }
       }
 
-      // 两人脚下的圆地毯
-      const rcx = (IN_GIRL_X + IN_BOY_X) / 2, rcy = gy + 3;
-      for (let dy = -4; dy <= 4; dy++) {
-        const hw = Math.round(22 * Math.sqrt(1 - (dy / 4.6) ** 2));
-        G.rect(rcx - hw, rcy + dy, hw * 2, 1, '#a8283a');
-        if (Math.abs(dy) < 4) {
+      // 大圆地毯 + 树裙
+      for (let dy = -5; dy <= 5; dy++) {
+        const hw = Math.round(42 * Math.sqrt(1 - (dy / 5.6) ** 2)), y = gy + 6 + dy;
+        G.rect(IN_TREE_X - hw, y, hw * 2, 1, '#8e2232');
+        if (Math.abs(dy) < 5) {
           const iw = hw - 3;
-          G.rect(rcx - iw, rcy + dy, iw * 2, 1, '#c22f40');
-          G.rect(rcx - iw, rcy + dy, 1, 1, '#ffd23f');
-          G.rect(rcx + iw - 1, rcy + dy, 1, 1, '#ffd23f');
+          G.rect(IN_TREE_X - iw, y, iw * 2, 1, '#a8283a');
+          G.rect(IN_TREE_X - iw, y, 1, 1, '#d8b04a');
+          G.rect(IN_TREE_X + iw - 1, y, 1, 1, '#d8b04a');
         }
       }
-      G.rect(rcx - 3, rcy, 6, 1, '#ffd23f');
-
-      // 炉火前睡觉的小猫（呼吸起伏 + 冒 z）
-      const cat = fx + 8, br = Math.floor(G.t * 1.2) % 2;
-      G.rect(cat, gy + 2, 10, 3, '#1b1433');
-      G.rect(cat + 1, gy + 1 - br, 8, 3, '#ff9f1c');
-      G.rect(cat + 1, gy + 3, 9, 1, '#e08e0b');
-      G.rect(cat + 1, gy - br, 1, 1, '#ff9f1c');
-      G.rect(cat + 3, gy - br, 1, 1, '#ff9f1c');
-      G.rect(cat + 2, gy + 2 - br, 1, 1, '#1b1433');
-      G.rect(cat + 6, gy + 2 - br, 3, 1, '#ffd27a');
-
-      // 挂在两人头顶的槲寄生（Mistletoe）
-      const mx = Math.round(rcx), my = gy - 26;
-      G.rect(mx, sag(mx) + 2, 1, my - sag(mx) - 2, '#d8b04a');
-      G.rect(mx - 2, my - 2, 2, 2, '#e23b4b');
-      G.rect(mx + 1, my - 2, 2, 2, '#e23b4b');
-      G.rect(mx, my - 1, 1, 1, '#a8283a');
-      G.rect(mx - 5, my, 5, 2, '#2f9e5e');
-      G.rect(mx + 1, my, 5, 2, '#2f9e5e');
-      G.rect(mx - 4, my + 1, 3, 1, '#5cc47e');
-      G.rect(mx + 2, my + 1, 3, 1, '#5cc47e');
-      G.rect(mx - 2, my + 2, 5, 1, '#1f6e4a');
-      G.rect(mx - 1, my + 1, 1, 1, '#ffffff');
-      G.rect(mx + 1, my + 2, 1, 1, '#ffffff');
-      G.rect(mx, my + 3, 1, 1, '#ffffff');
-
-      G.rect(IN_TREE_X - 15, gy - 1, 30, 2, '#e23b4b');
-      G.rect(IN_TREE_X - 12, gy - 2, 24, 1, '#e23b4b');
-      const tx = IN_TREE_X - 14, ty = gy - 46;
-      G.draw(P.bigTree, tx, ty);
-
-      const n = G.clamp(Math.floor((t - T.deco) / ORN_GAP) + 1, 0, P.spots.length);
-      for (let i = 0; i < n; i++) {
-        const [ox, oy] = P.spots[i], fresh = t - (T.deco + i * ORN_GAP) < 0.12;
-        G.rect(tx + ox, ty + oy, 1, 1, fresh ? '#ffffff' : ORN_COLORS[i % ORN_COLORS.length]);
+      for (let k = -3; k <= 3; k++) {
+        const x = IN_TREE_X + k * 10;
+        G.rect(x, gy + 5, 1, 1, '#f3e6c8');
+        G.rect(x - 1, gy + 6, 3, 1, '#f3e6c8');
+        G.rect(x, gy + 7, 1, 1, '#f3e6c8');
       }
-      if (t >= T.lights) {
-        const blink = Math.floor(G.t * 4);
-        P.lights.forEach(([ox, oy], i) => {
-          if (t - T.lights > i * 0.03) G.rect(tx + ox, ty + oy, 1, 1, (i + blink) % 2 ? '#ffd23f' : '#fff6d0');
+      for (let dy = -2; dy <= 2; dy++) {
+        const hw = Math.round(17 * Math.sqrt(1 - (dy / 2.6) ** 2));
+        G.rect(IN_TREE_X - hw, gy + 1 + dy, hw * 2, 1, Math.abs(dy) === 2 ? '#f3e6c8' : '#c22f40');
+      }
+
+      // ---- 圣诞树 ----
+      const tr = fancyTree(treeH(gy)), tx = IN_TREE_X - tr.w / 2, ty = gy + 1 - tr.h;
+      G.draw(tr.c, tx, ty);
+
+      // 金色彩带：亮灯时从左到右铺开，之后有一道亮光沿着彩带流动
+      if (lit) {
+        const shown = Math.floor((t - T.lights) / 0.5 * tr.tinsel.length);
+        const run = Math.floor(G.t * 14);
+        tr.tinsel.slice(0, shown).forEach(([ox, oy], i) => {
+          G.rect(tx + ox, ty + oy, 1, 1, (ox + run) % 9 === 0 ? '#fff6d0' : ox % 2 ? '#ffd23f' : '#e0a82e');
         });
       }
+
+      // 装饰球：一颗一颗挂上去（大的 2x2 带高光）
+      const n = G.clamp(Math.floor((t - T.deco) / ORN_GAP) + 1, 0, tr.spots.length);
+      for (let i = 0; i < n; i++) {
+        const [ox, oy] = tr.spots[i], fresh = t - (T.deco + i * ORN_GAP) < 0.1;
+        const c = fresh ? '#ffffff' : ORN_COLORS[i % ORN_COLORS.length];
+        if (i % 3 === 2) { G.rect(tx + ox, ty + oy, 1, 1, c); continue; }
+        G.rect(tx + ox, ty + oy, 2, 2, c);
+        G.rect(tx + ox, ty + oy, 1, 1, '#ffffff');
+        G.rect(tx + ox + 1, ty + oy + 1, 1, 1, '#1b1433');
+      }
+
+      // 彩灯：逐个亮起，各自闪烁，亮的时候带一圈光晕
+      if (lit) {
+        tr.lights.forEach(([ox, oy], i) => {
+          if (t - T.lights < i * 0.015) return;
+          const on = Math.sin(G.t * 3 + i * 1.7) > -0.2, c = BULBS[i % 4];
+          const x = tx + ox, y = ty + oy;
+          if (on && i % 3 === 0) {
+            G.rect(x - 1, y, 3, 1, '#fff6d0');
+            G.rect(x, y - 1, 1, 3, '#fff6d0');
+          }
+          G.rect(x, y, 1, 1, on ? c : '#2b4a3a');
+        });
+      }
+
+      // 星星：她抛上去之后放光
+      const starX = IN_TREE_X - 4, starY = ty - 7;
       if (t >= T.star) {
-        // 树下的礼物
-        for (const [gx, gw, gh, c1, c2] of [[3, 7, 6, '#5bc0eb', '#ffffff'], [11, 6, 4, '#ffd23f', '#e23b4b'], [30, 6, 5, '#b388ff', '#ffd23f'], [36, 5, 3, '#ff7aa2', '#ffffff']]) {
-          G.rect(gx - 1, gy - gh - 1, gw + 2, gh + 1, '#1b1433');
-          G.rect(gx, gy - gh, gw, gh, c1);
-          G.rect(gx + (gw >> 1), gy - gh, 1, gh, c2);
-          G.rect(gx, gy - gh + (gh >> 1), gw, 1, c2);
-          G.rect(gx + (gw >> 1) - 1, gy - gh - 2, 3, 1, c2);
-        }
-        G.draw(P.star, IN_TREE_X - 2, gy - 49);
-        if (Math.floor(G.t * 3) % 2) {
-          for (const [dx, dy] of [[-4, -4], [4, -4], [-4, 2], [4, 2]]) G.rect(IN_TREE_X + dx, gy - 47 + dy, 1, 1, '#fff6d0');
+        const pulse = Math.floor(G.t * 3) % 2;
+        const L = pulse ? 4 : 3;
+        G.rect(IN_TREE_X - 0.5, starY - L - 1, 1, L, '#fff3b0');
+        G.rect(starX - L - 1, starY + 3, L, 1, '#fff3b0');
+        G.rect(starX + 10, starY + 3, L, 1, '#fff3b0');
+        if (pulse) for (const [dx, dy] of [[-2, -2], [10, -2], [-2, 9], [10, 9]]) G.rect(starX + dx, starY + dy, 1, 1, '#fff6d0');
+        G.draw(P.star, starX, starY);
+
+        // 树周围随机一闪一闪的小星光
+        tr.lights.forEach(([ox, oy], i) => {
+          if (i % 5 || Math.sin(G.t * 2.5 + i * 2.1) < 0.93) return;
+          const x = tx + ox + (i % 2 ? 2 : -2), y = ty + oy - 1;
+          G.rect(x - 1, y, 3, 1, '#ffffff');
+          G.rect(x, y - 1, 1, 3, '#ffffff');
+        });
+
+        // 树下的礼物堆
+        for (const [gx, gw, gh, c1, c2] of [[-13, 7, 6, '#5bc0eb', '#ffffff'], [-6, 9, 8, '#e23b4b', '#ffd23f'], [4, 7, 5, '#ffd23f', '#e23b4b'], [11, 5, 4, '#b388ff', '#ffffff']]) {
+          const x = IN_TREE_X + gx, y = gy + 3 - gh;
+          G.rect(x - 1, y - 1, gw + 2, gh + 1, '#1b1433');
+          G.rect(x, y, gw, gh, c1);
+          G.rect(x + (gw >> 1), y, 1, gh, c2);
+          G.rect(x, y + (gh >> 1), gw, 1, c2);
+          G.rect(x + (gw >> 1) - 1, y - 2, 3, 1, c2);
         }
       } else if (t >= T.throwStar) {
         const p = (t - T.throwStar) / (T.star - T.throwStar);
-        const sx = IN_GIRL_X - 4 + (IN_TREE_X - IN_GIRL_X + 4) * p, sy = gy - 14 + (-33) * p - Math.sin(p * Math.PI) * 14;
-        G.draw(P.star, sx - 2, sy - 2);
+        const sx = IN_GIRL_X + 4 + (starX - IN_GIRL_X - 4) * p, sy = gy - 8 + (starY - gy + 8) * p - Math.sin(p * Math.PI) * 16;
+        G.draw(P.star, sx, sy);
       }
+
+      // 右下角睡觉的小猫（呼吸起伏）
+      const cat = 79, cy = gy + 8, br = Math.floor(G.t * 1.2) % 2;
+      G.rect(cat, cy + 2, 10, 3, '#1b1433');
+      G.rect(cat + 1, cy + 1 - br, 8, 3, '#ff9f1c');
+      G.rect(cat + 1, cy + 3, 9, 1, '#e08e0b');
+      G.rect(cat + 1, cy - br, 1, 1, '#ff9f1c');
+      G.rect(cat + 3, cy - br, 1, 1, '#ff9f1c');
+      G.rect(cat + 2, cy + 2 - br, 1, 1, '#1b1433');
+      G.rect(cat + 6, cy + 2 - br, 3, 1, '#ffd27a');
     }
 
     // ---------- 礼物盒 ----------
@@ -667,11 +744,12 @@
         }
         S.t += dt;
         while (S.ei < events.length && events[S.ei].t <= S.t) events[S.ei++].fn();
-        // 结尾：两人中间不停冒出小爱心
+        // 结尾：两人头顶轮流冒出小爱心，往树的方向飘
         if (S.t > T.title && (S.heartT -= dt) <= 0) {
-          S.heartT = 0.7;
-          const { gy } = dims();
-          part({ spr: G.SPR.heartS, x: (IN_GIRL_X + IN_BOY_X) / 2 + G.rand(-3, 3), y: gy - 24, vx: G.rand(-4, 4), vy: -10, life: 1.8 });
+          S.heartT = 0.8;
+          S.heartN = (S.heartN || 0) + 1;
+          const { gy } = dims(), left = S.heartN % 2;
+          part({ spr: G.SPR.heartS, x: (left ? IN_GIRL_X : IN_BOY_X) + G.rand(-2, 2), y: gy - 18, vx: left ? 5 : -5, vy: -9, life: 2 });
         }
         if (S.leaving && (S.leaving += dt) > 0.4 && !S.gone) {
           S.gone = true;
@@ -715,8 +793,9 @@
             drawBoyInWindow(cam, d.gy);
             if (!h.hidden) drawAvatar(P.girl, (h.x - cam) * 2, gy2, Object.assign({ dy: hopY('girl') }, h));
           } else {
-            drawAvatar(P.boy, IN_BOY_X * 2, gy2, { dy: hopY('boy') });
-            drawAvatar(P.girl, IN_GIRL_X * 2, gy2, { dy: hopY('girl') });
+            const feet = (d.gy + FEET) * 2;
+            drawAvatar(P.girl, IN_GIRL_X * 2, feet, { dy: hopY('girl') });
+            drawAvatar(P.boy, IN_BOY_X * 2, feet, { dy: hopY('boy'), flip: true });
           }
         }
 
@@ -748,8 +827,8 @@
         }
         if (t >= T.ready) {
           const on = S.leaving ? Math.floor(G.t * 12) % 2 : Math.floor(G.t * 2.5) % 2 === 0;
-          if (on) G.text('TAP TO CONTINUE', W / 2, gy2 + 18, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
-          G.text('点击屏幕继续', W / 2, gy2 + 36, { color: '#ffd23f', align: 'center', wave: true });
+          if (on) G.text('TAP TO CONTINUE', W / 2, gy2 + 28, { color: '#ffffff', align: 'center', shadow: '#1b1433' });
+          G.text('点击屏幕继续', W / 2, gy2 + 46, { color: '#ffd23f', align: 'center', wave: true });
         }
       },
 
