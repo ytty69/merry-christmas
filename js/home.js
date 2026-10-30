@@ -48,7 +48,7 @@
     { x0: 190, x1: 270, wall: '#dcefe4', pat: '#c6e2d2', kitchen: true }, // 餐厅
     { x0: 270, x1: 374, wall: '#f5dede', pat: '#ecc8c8' },              // 卧室
   ];
-  // 挂在衣架上的外套（按参考图还原）：歪着的弯钩、随意垂下来的外套、里面的红衬衫
+  // 挂在衣架上的外套（按参考图还原）：歪着的弯钩、随意垂下来的蓝外套、里面的白衬衫
   const COAT_ROWS = [
     '.........hhh..........',
     '........h...h.........',
@@ -78,7 +78,7 @@
     '.....kkk...kclllck....',
     '............kkkkk.....',
   ];
-  const COAT_PAL = { k: '#173322', c: '#3f8a5c', l: '#5fae7a', d: '#2a6444', s: '#c2392b', S: '#962a20', b: '#a0662f', h: '#7a4a2a' };
+  const COAT_PAL = { k: '#1a2238', c: '#4a7fc0', l: '#6a9ad6', d: '#2f5a96', s: '#f8f6f0', S: '#d6d2c8', b: '#a0662f', h: '#7a4a2a' };
   let coatSpr = null;
   const COAT = () => coatSpr || (coatSpr = G.makeSprite(COAT_ROWS, COAT_PAL));
   // 侧坐的小柴犬：竖耳朵、红项圈和小铃铛、奶白色胸口、大卷尾巴
