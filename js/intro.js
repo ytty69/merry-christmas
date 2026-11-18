@@ -66,8 +66,11 @@
   function sprites() {
     if (SPR) return SPR;
     SPR = {
-      girl: loadImg('assets/girl.png?v=2'),   // 去砍树的她（换图后把 v 加 1）
-      boy: loadImg('assets/boy.png?v=2'),     // 在家等的他
+      // 两套衣服：室内版（圣诞毛衣）在屋里用，室外版（外套 + 围巾）在雪地里用；换图后把 v 加 1
+      girl: loadImg('assets/girl_in.png?v=3'),
+      boy: loadImg('assets/boy_in.png?v=3'),
+      girlOut: loadImg('assets/girl_out.png?v=3'),
+      boyOut: loadImg('assets/boy_out.png?v=3'),
       star: G.makeSprite(outlined(STAR, 'k'), { y: '#ffc61a', w: '#fff6d0', o: '#f08c00', k: '#5a2a0a' }),
       tree: pine(18, 30, false),
       bgTree: pine(8, 14, true),
@@ -482,7 +485,7 @@
       const r = (ox, oy, w, h, c) => G.rect(f > 0 ? X + ox : X - ox - w, ground + oy, w, h, c);
       if (o.axe === 'shoulder') { r(-11, -32, 2, 22, HANDLE); r(-17, -35, 8, 6, METAL); r(-17, -35, 2, 6, '#ffffff'); }
       const bob = o.walk ? -(Math.floor(S.t * 4) % 2) : 0;
-      if (img.complete && img.naturalWidth) G.draw(img, X - 16, ground - 40 + bob + (o.dy || 0), 1, o.flip);
+      if (img.complete && img.naturalWidth) G.draw(img, X - 16, ground - 41 + bob + (o.dy || 0), 1, o.flip);
       if (o.axe === 'up') { r(8, -36, 2, 26, HANDLE); r(8, -40, 9, 6, METAL); r(15, -40, 2, 6, '#ffffff'); }
       if (o.axe === 'down') { r(8, -11, 12, 2, HANDLE); r(18, -15, 6, 9, METAL); r(22, -15, 2, 9, '#ffffff'); }
     }
@@ -854,7 +857,7 @@
         if (S.phase === 'story') {
           if (outside) {
             drawBoyInWindow(cam, d.gy);
-            if (!h.hidden) drawAvatar(P.girl, (h.x - cam) * 2, gy2, Object.assign({ dy: hopY('girl') }, h));
+            if (!h.hidden) drawAvatar(P.girlOut, (h.x - cam) * 2, gy2, Object.assign({ dy: hopY('girl') }, h));
           } else {
             const feet = (d.gy + FEET) * 2;
             drawAvatar(P.girl, (IN_GIRL_X - cam) * 2, feet, { dy: hopY('girl') });

@@ -127,8 +127,8 @@
 
         // 两个人并肩站在家门口
         const feet = (gy + 4) * 2;
-        for (const [img, x] of [[P.girl, (COUPLE[0] - HOUSE_CAM) * 2], [P.boy, (COUPLE[1] - HOUSE_CAM) * 2]]) {
-          if (img.complete && img.naturalWidth) G.draw(img, Math.round(x) - 16, feet - 40);
+        for (const [img, x] of [[P.girlOut, (COUPLE[0] - HOUSE_CAM) * 2], [P.boyOut, (COUPLE[1] - HOUSE_CAM) * 2]]) {
+          if (img.complete && img.naturalWidth) G.draw(img, Math.round(x) - 16, feet - 41);
         }
         for (const h of S.hearts) {
           if (h.life < 0.3 && Math.floor(G.t * 20) % 2) continue;

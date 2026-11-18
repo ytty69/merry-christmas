@@ -566,13 +566,13 @@
     function drawAvatar(img, sx, ground, flip, dy, walk, ang = 0) {
       if (!img.complete || !img.naturalWidth) return;
       const bob = walk ? -(Math.floor(S.t * 4) % 2) : 0;
-      if (!ang) { G.draw(img, Math.round(sx) - 16, ground - 40 + bob + dy, 1, flip); return; }
+      if (!ang) { G.draw(img, Math.round(sx) - 16, ground - 41 + bob + dy, 1, flip); return; }
       const c = G.ctx;
       c.save();
       c.translate(Math.round(sx), ground + dy);
       c.rotate(ang);
       if (flip) c.scale(-1, 1);
-      c.drawImage(img, -16, -40);
+      c.drawImage(img, -16, -41);
       c.restore();
     }
 
