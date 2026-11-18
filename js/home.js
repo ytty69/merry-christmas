@@ -7,7 +7,7 @@
   const TEXT = {
     welcome: '欢迎回家~\n按左右箭头走走看，点点屋里的东西吧',
     allFound: '全部都发现啦！\n圣诞快乐，老公 ♥',
-    // 树下的礼物：按顺序一个一个拆开，最后一个放最想说的话
+    // 树下的三个礼物，从左到右：蓝、红、紫。点哪个就拆哪个
     gifts: [
       '礼物 1：\n（这里写一段想对他说的话）',
       '礼物 2：\n（这里写一段你们的回忆）',
@@ -110,7 +110,7 @@
     const S = {
       t: 0, parts: [], floats: [], hops: {}, bubbles: {}, timers: [], queue: [],
       boy: { x: 24, flip: false, target: null, pending: null, walking: false, stepT: 0 },
-      hold: {}, dialog: null, found: new Set(), gifts: TEXT.gifts.length,
+      hold: {}, dialog: null, found: new Set(), opened: [false, false, false],
       near: false, lastInter: '', lock: 0, lampOff: false,
       mistle: -99, wag: -99, kiss: -99, kissExplained: false, fire: -99, oven: -99, shoot: -99, allShown: false,
     };
@@ -227,18 +227,19 @@
         { id: 'rack', r: [37, gy - 46, 22, 46], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
         { id: 'dog', r: [89, gy - 15, 19, 18], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 96, gy - 18); hearts(96, gy - 14, 3); } },
         { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
-        {
-          id: 'gifts', r: [106, gy - 7, 32, 13], stand: 112, act() {
-            if (S.gifts > 0) {
-              const i = TEXT.gifts.length - S.gifts;
-              S.gifts--;
-              A.play('pop');
-              sparkles(TREE_X, gy - 4, 14, 10);
-              dialog(TEXT.gifts[i]);
-              if (!S.gifts) { G.flash = 0.3; hearts(TREE_X, gy - 10, 10); }
-            } else dialog(TEXT.giftsDone);
+        // 树下三个礼物，各自单独点开
+        ...GIFTS.map(([gx, gw, gh], i) => ({
+          id: 'gift' + i, r: [TREE_X + gx - 1, gy + 2 - gh, gw + 2, gh + 4], stand: Math.min(131, TREE_X + gx + (gw >> 1)),
+          gone: () => S.opened[i],
+          act() {
+            if (S.opened[i]) return;
+            S.opened[i] = true;
+            A.play('pop');
+            sparkles(TREE_X + gx + (gw >> 1), gy, 10, 6);
+            dialog(TEXT.gifts[i]);
+            if (S.opened.every(Boolean)) { G.flash = 0.3; hearts(TREE_X, gy - 10, 10); dialog(TEXT.giftsDone); }
           },
-        },
+        })),
         { id: 'tree', r: [106, gy - 72, 32, 62], stand: 112, act() { dialog(T.tree); A.play('sparkle'); sparkles(TREE_X, gy - 36, 20, 16); } },
         { id: 'girl', r: [GIRL_X - 8, gy - 21, 16, 24], stand: GIRL_X - 12, act() { S.near = true; girlInteract(); } },
         { id: 'stocking', r: [159, gy - 21, 22, 11], stand: 170, act() { dialog(T.stocking); A.play('coin'); float('♥', 170, gy - 24, '#ff4d6d'); } },
@@ -558,7 +559,8 @@
       const c = G.ctx;
       c.save();
       c.scale(2, 2);   // 和场景一样按半分辨率的像素来画
-      GIFTS.slice(0, S.gifts).forEach(([gx, gw, gh, c1, c2]) => {
+      GIFTS.forEach(([gx, gw, gh, c1, c2], i) => {
+        if (S.opened[i]) return;
         const x = TREE_X + gx - cam, y = gy + 5 - gh;
         G.rect(x - 1, y - 1, gw + 2, gh + 1, '#1b1433');
         G.rect(x, y, gw, gh, c1);
@@ -777,7 +779,7 @@
         }
         // 点屋里：先看是不是点到了物品，否则就走过去
         const { gy } = dims(), cam = camOf(), wx = x / 2 + cam, wy = y / 2;
-        const it = items(gy).find(o => wx >= o.r[0] && wx < o.r[0] + o.r[2] && wy >= o.r[1] && wy < o.r[1] + o.r[3]);
+        const it = items(gy).find(o => !(o.gone && o.gone()) && wx >= o.r[0] && wx < o.r[0] + o.r[2] && wy >= o.r[1] && wy < o.r[1] + o.r[3]);
         if (S.lock > 0) return;
         if (it) { S.boy.target = it.stand; S.boy.pending = it; A.play('blip'); }
         else if (wy > gy - 20) { S.boy.target = G.clamp(wx, 8, WORLD - 8); S.boy.pending = null; }
