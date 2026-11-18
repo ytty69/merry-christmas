@@ -217,19 +217,10 @@
       const T = TEXT.items;
       itemGy = gy;
       itemCache = [
-        {
-          id: 'door', r: [10, gy - 30, 24, 30], stand: 22, act() {
-            A.play('blip');
-            S.hold = {};
-            later(0.2, () => G.transition(() => G.Fireworks(scene, T.door)));
-          },
-        },
-        { id: 'rack', r: [37, gy - 46, 22, 46], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
-        { id: 'dog', r: [89, gy - 15, 19, 18], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 96, gy - 18); hearts(96, gy - 14, 3); } },
-        { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
-        // 树下三个礼物，各自单独点开
+        // 树下三个礼物，各自单独点开（放在最前面：礼物画在最上层，和沙发、小狗重叠的地方也算点礼物）
         ...GIFTS.map(([gx, gw, gh], i) => ({
-          id: 'gift' + i, r: [TREE_X + gx - 1, gy + 2 - gh, gw + 2, gh + 4], stand: Math.min(131, TREE_X + gx + (gw >> 1)),
+          // 点击范围 = 礼物画出来的范围，三个互不重叠
+          id: 'gift' + i, r: [TREE_X + gx, gy + 2 - gh, gw, gh + 3], stand: Math.min(131, TREE_X + gx + (gw >> 1)),
           gone: () => S.opened[i],
           act() {
             if (S.opened[i]) return;
@@ -240,6 +231,16 @@
             if (S.opened.every(Boolean)) { G.flash = 0.3; hearts(TREE_X, gy - 10, 10); dialog(TEXT.giftsDone); }
           },
         })),
+        {
+          id: 'door', r: [10, gy - 30, 24, 30], stand: 22, act() {
+            A.play('blip');
+            S.hold = {};
+            later(0.2, () => G.transition(() => G.Fireworks(scene, T.door)));
+          },
+        },
+        { id: 'rack', r: [37, gy - 46, 22, 46], stand: 48, act() { dialog(T.rack); A.play('blip'); hop('boy', 0.3, 5); } },
+        { id: 'dog', r: [89, gy - 15, 19, 18], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 96, gy - 18); hearts(96, gy - 14, 3); } },
+        { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
         { id: 'tree', r: [106, gy - 72, 32, 62], stand: 112, act() { dialog(T.tree); A.play('sparkle'); sparkles(TREE_X, gy - 36, 20, 16); } },
         { id: 'girl', r: [GIRL_X - 8, gy - 21, 16, 24], stand: GIRL_X - 12, act() { S.near = true; girlInteract(); } },
         { id: 'stocking', r: [159, gy - 21, 22, 11], stand: 170, act() { dialog(T.stocking); A.play('coin'); float('♥', 170, gy - 24, '#ff4d6d'); } },
