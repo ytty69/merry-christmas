@@ -228,7 +228,7 @@
         { id: 'dog', r: [89, gy - 15, 19, 18], stand: 104, act() { dialog(T.dog); S.wag = S.t; A.play('woof'); float('汪~', 96, gy - 18); hearts(96, gy - 14, 3); } },
         { id: 'sofa', r: [74, gy - 18, 36, 18], stand: 92, act() { dialog(T.sofa); A.play('jump'); hop('boy', 0.4, 8); } },
         {
-          id: 'gifts', r: [108, gy - 10, 28, 13], stand: 112, act() {
+          id: 'gifts', r: [106, gy - 7, 32, 13], stand: 112, act() {
             if (S.gifts > 0) {
               const i = TEXT.gifts.length - S.gifts;
               S.gifts--;
@@ -426,18 +426,9 @@
           G.rect(X(TREE_X + 4) - hw + 3, y, hw * 2 - 6, 1, '#a8283a');
         }
       }
-      // 圣诞树 + 树下礼物
+      // 圣诞树（树下的礼物画在人物前面，见 drawGifts）
       const tr = ART.fancyTree(Math.min(ART.treeH(gy), gy - ceil - 14));
       ART.drawTree(tr, X(TREE_X), gy, { orn: 99, tinsel: 1, lightsT: 99, star: true });
-      const giftsSpec = [[-13, 7, 6, '#5bc0eb', '#ffffff'], [-5, 9, 8, '#e23b4b', '#ffd23f'], [6, 7, 5, '#b388ff', '#ffffff']];
-      giftsSpec.slice(0, S.gifts).forEach(([gx, gw, gh, c1, c2]) => {
-        const x = X(TREE_X + gx), y = gy + 2 - gh;
-        G.rect(x - 1, y - 1, gw + 2, gh + 1, '#1b1433');
-        G.rect(x, y, gw, gh, c1);
-        G.rect(x + (gw >> 1), y, 1, gh, c2);
-        G.rect(x, y + (gh >> 1), gw, 1, c2);
-        G.rect(x + (gw >> 1) - 1, y - 2, 3, 1, c2);
-      });
       // 壁炉（点击后火会旺一下）
       const fx = X(156), big = S.t - S.fire < 1.2 ? 3 : 0;
       G.rect(fx, gy - 20, 28, 20, '#8a80a8');
@@ -559,6 +550,25 @@
       G.rect(X(365), gy - 18, 2, 8, '#6e4630');
       G.rect(X(361), gy - 26, 10, 8, S.lampOff ? '#c8b48a' : '#ffd27a');
       G.rect(X(361), gy - 26, 10, 1, S.lampOff ? '#a8946a' : '#fff6d0');
+    }
+
+    // 树下的礼物：放在地毯前面、画在人物之上，他走过去时不会把礼物挡住
+    const GIFTS = [[-15, 9, 7, '#5bc0eb', '#ffffff'], [-6, 11, 9, '#e23b4b', '#ffd23f'], [6, 9, 6, '#b388ff', '#ffffff']];
+    function drawGifts(cam, gy) {
+      const c = G.ctx;
+      c.save();
+      c.scale(2, 2);   // 和场景一样按半分辨率的像素来画
+      GIFTS.slice(0, S.gifts).forEach(([gx, gw, gh, c1, c2]) => {
+        const x = TREE_X + gx - cam, y = gy + 5 - gh;
+        G.rect(x - 1, y - 1, gw + 2, gh + 1, '#1b1433');
+        G.rect(x, y, gw, gh, c1);
+        G.rect(x, y, gw, 1, '#ffffff');
+        G.rect(x + (gw >> 1), y, 1, gh, c2);
+        G.rect(x, y + (gh >> 1), gw, 1, c2);
+        G.rect(x + (gw >> 1) - 2, y - 2, 2, 2, c2);
+        G.rect(x + (gw >> 1) + 1, y - 2, 2, 2, c2);
+      });
+      c.restore();
     }
 
     // ---------- 角色、气泡、按钮、对话框（原分辨率） ----------
@@ -706,6 +716,7 @@
         const lean = kt < 0.5 ? 0 : kt < 0.8 ? (kt - 0.5) / 0.3 : kt < 1.9 ? 1 : kt < 2.2 ? (2.2 - kt) / 0.3 : 0;
         drawAvatar(P.girl, (GIRL_X - cam) * 2 - Math.round(lean * 4), feet, b.x > GIRL_X, hopY('girl') - Math.round(lean * 2), false, -0.12 * lean);
         drawAvatar(P.boy, (bx - cam) * 2 + Math.round(lean * 4), feet, b.flip, hopY('boy'), b.walking, 0.12 * lean);
+        drawGifts(cam, gy);
 
         // 关灯后的卧室：变暗，只剩小星星灯亮着
         if (S.lampOff) {
